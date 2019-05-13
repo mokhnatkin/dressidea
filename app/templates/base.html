@@ -1,0 +1,126 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block title %}
+    {% if title %}{{ title }}
+    {% else %}Швейная мастерская - коворкинг, Алматы
+    {% endif %}
+{% endblock %}
+
+{% block navbar %}
+    {% if current_user.is_anonymous %}
+        <nav class="navbar navbar-default">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a href="{{ url_for('index') }}" class="navbar-left"><img style="max-width:150px; margin-right: 10px;" src="{{ url_for('get_path_to_static',fname='logo.jpg') }}" alt="Швейный коворкинг"></a>
+                </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-left">                    
+                    <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts">Контакты</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('gallery') }}">Галерея</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a class="navbar-brand" href="{{ g.const_public.insta_url }}"><i class="fab fa-instagram"></i></a></li>
+                    <li><a class="navbar-brand" href="tel:{{ g.const_public.phone }}"><i class="fa fa-mobile"></i>&nbsp;{{ g.const_public.phone }}</a></li>                        
+                </ul>                
+            </div>
+        </nav>
+    {% else %}<!--navbar для авторизованных пользователей-->
+    <nav class="navbar navbar-default">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a href="{{ url_for('index') }}" class="navbar-left"><img style="max-width:150px; margin-right: 10px;" src="{{ url_for('get_path_to_static',fname='logo.jpg') }}" alt="Швейный коворкинг"></a>
+                </div>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-left">
+                    <li><a class="navbar-brand" href="{{ url_for('visits_today') }}">Коворкинг LIVE</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('add_client') }}">Создать клиента</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('add_visit_booking') }}">Создать визит / бронь</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('all_bookings') }}">Брони</a></li>
+                    {% if current_user.role == 'admin' %}
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Фото
+                        </button>
+                        <div class="dropdown-menu">
+                            <ul class="nav navbar-nav">
+                                <li><a href="{{ url_for('upload_file') }}">Загрузить фото</a></li>
+                                <li><a href="{{ url_for('files') }}">Список фото</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Пользователи
+                        </button>
+                        <div class="dropdown-menu">
+                            <ul class="nav navbar-nav">
+                                <li><a href="{{ url_for('register') }}">Добавить пользователя</a></li>
+                                <li><a href="{{ url_for('users') }}">Список пользователей</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                            <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Константы сайта
+                            </button>
+                            <div class="dropdown-menu">
+                                <ul class="nav navbar-nav">
+                                    <li><a href="{{ url_for('const_public') }}">Константы сайта</a></li>
+                                    <li><a href="{{ url_for('const_admin') }}">Константы админки</a></li>
+                                    <li><a href="{{ url_for('item_inside') }}">Список оборудования</a></li>
+                                    <li><a href="{{ url_for('sources') }}">Источники клиентов</a></li>
+                                </ul>
+                            </div>
+                        </div>                        
+                    {% endif %}<!--конец блока меню для администратора-->
+                </ul>
+                <ul class="nav navbar-nav navbar-right">                    
+                    <li><a class="navbar-brand" href="{{ url_for('logout') }}">Выход ({{ current_user.username }})</a></li>                        
+                </ul>
+            </div>
+        </nav>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+        
+        {% block app_content %}
+        {% endblock %}
+    </div>
+    {% block footer %}
+        {% if current_user.is_anonymous %}
+            <footer>
+                &copy; 2019 Швейный коворкинг DressIdea, Алматы
+                <a href="{{ url_for('index') }}#contacts">Контакты</a>
+                <a href="{{ url_for('gallery') }}">Галерея</a>
+            </footer>
+        {% endif %}
+    {% endblock footer %}    
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+    {{ moment.locale(g.locale) }}
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">    
+{% endblock %}

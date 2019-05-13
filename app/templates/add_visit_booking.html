@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<h1>Добавить визит или бронь</h1>
+{{ descr }}
+<div>
+    <h2>Последние 10 клиентов</h2>
+    <table class="table table-hover">
+        <tr>
+            <th>Имя</th>
+            <th>Мобильный телефон</th>
+            <th>Добавить визит</th>
+            <th>Добавить бронь</th>
+        </tr>
+        {% for c in clients %}
+        <tr>
+            <td>{{ c.name }}</td>
+            <td>{{ c.phone }}</td>
+            <td><a href="{{ url_for('add_visit_for_client',client_id=c.id) }}">Добавить визит</a></td>
+            <td><a href="{{ url_for('add_booking_for_client',client_id=c.id) }}">Добавить бронь</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

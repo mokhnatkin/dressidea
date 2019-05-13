@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="container">
+    <div class="row">
+        <h1>Фото швейной мастерской-коворкинга</h1>
+    </div>
+    {% if show_photos %}
+    <div class="row">
+            <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                    <!-- Indicators -->
+                    <ol class="carousel-indicators">
+                        {% for i in range(gallery_photos_len) %}
+                            {% if i==0 %}
+                                <li data-target="#myCarousel" data-slide-to="{{i}}" class="active"></li>
+                            {% else %}
+                                <li data-target="#myCarousel" data-slide-to="{{i}}"></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ol>
+                    <!-- Wrapper for slides -->
+                    <div class="carousel-inner">
+                        {% for i in range(gallery_photos_len) %}
+                            {% if i==0 %}
+                                <div class="item active">
+                                    <img src="{{ url_for('get_path_to_static',fname=gallery_photos[i].name) }}" alt="Швейный коворкинг Алматы">
+                                    <div class="carousel-caption">
+                                        <h3>{{ gallery_photos[i].caption }}</h3>
+                                        <p>{{ gallery_photos[i].descr }}</p>
+                                    </div>
+                                </div>
+                            {% else %}                  
+                                <div class="item">
+                                    <img src="{{ url_for('get_path_to_static',fname=gallery_photos[i].name) }}" alt="Швейный коворкинг Алматы">
+                                    <div class="carousel-caption">
+                                            <h3>{{ gallery_photos[i].caption }}</h3>
+                                            <p>{{ gallery_photos[i].descr }}</p>
+                                        </div>                                    
+                                </div>
+                            {% endif %}
+                        {% endfor %} 
+                    </div>                  
+                    <!-- Left and right controls -->
+                    <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+                        <span class="glyphicon glyphicon-chevron-left"></span>
+                        <span class="sr-only">Назад</span>
+                    </a>
+                    <a class="right carousel-control" href="#myCarousel" data-slide="next">
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                        <span class="sr-only">Вперед</span>
+                    </a>
+                </div>
+    </div>
+    {% endif %}
+    <div class="row">
+        <p></p><p></p>
+    </div>
+</div>
+{% endblock %}
+

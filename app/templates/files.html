@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<h1>Список загруженных фото</h1>
+<div>
+    <table class="table table-hover">
+        <tr>
+            <th>Имя файла</th>
+            <th>Тип</th>
+            <th>Заголовок</th>
+            <th>Описание</th>
+            <th>Дата-время загрузки</th>
+            <th>Фото отображается на сайте?</th>            
+            <th>Изменить статус отображения на сайте</th>
+            <th>Изменить описание</th>
+        </tr>
+        {% for f in files %}
+        <tr>
+            <td><a href="{{ url_for('downloadFile',fname=f.name) }}">{{ f.name }}</a></td>
+            <td>
+                {% if f.photo_type=='carousel' %}
+                    Карусель
+                {% else %}
+                    Галерея
+                {% endif %}
+            </td>
+            <td>
+                {% if f.caption %}
+                    {{ f.caption }}
+                {% endif %}
+            </td>
+            <td>
+                {% if f.descr %}
+                    {{ f.descr }}
+                {% endif %}               
+            </td>
+            <td>{{ moment(f.timestamp).format('LLL') }}</td>
+            <td>
+                {% if f.active %}
+                    Да
+                {% else %}
+                    Нет
+                {% endif %}
+            </td>            
+            <td>
+                {% if f.active %}
+                    <a href="{{ url_for('deactivateFile',fid=f.id) }}">Скрыть</a>
+                {% else %}
+                    <a href="{{ url_for('activateFile',fid=f.id) }}">Показать</a>
+                {% endif %}                
+            </td>
+            <td>
+                <a href="{{ url_for('edit_file',fid=f.id) }}">Изменить описание</a>                    
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}

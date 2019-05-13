@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<h1>Список броней</h1>
+<div>
+    <table class="table table-hover">
+        <tr>
+            <th>Клиент</th>
+            <th>Телефон</th>
+            <th>Начало</th>
+            <th>Окончание</th>
+            <th>Статус</th>
+            <th>Поменять статус</th>
+            <th>Комментарий</th>
+        </tr>
+        {% for b in bookings %}
+        <tr>
+            <td>{{ b.name }}</td>
+            <td>{{ b.phone }}</td>
+            <td>{{ moment(b.begin).format('LLL') }}</td>
+            <td>{{ moment(b.end).format('LLL') }}</td>
+            <td>
+                {% if b.attended %}
+                    Пришел
+                {% else %}
+                    Не указано
+                {% endif %}
+            </td>
+            <td>
+                {% if not b.attended %}
+                    <a href="{{ url_for('change_booking_status',booking_id=b.id) }}">Клиент пришел</a>
+                {% endif %}
+            </td>
+            <td>{{ b.comment }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}
