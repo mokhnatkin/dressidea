@@ -18,11 +18,14 @@ from functools import wraps
 def before_request():
     g.locale = str(get_locale())
     const_public = None
+    const_admin = None
     try:
         const_public = Const_public.query.first()
+        const_admin = Const_admin.query.first()
     except:
         pass
     g.const_public = const_public
+    g.const_admin = const_admin
 
 #A function defintion which will work as a decorator for each view – we can call this with @required_roles
 def required_roles(*roles):
@@ -49,9 +52,8 @@ def index():#главная страница
     rate = None
     max_amount = None
     try:
-        const_admin = Const_admin.query.first()
-        rate = round(const_admin.rate)
-        max_amount = round(const_admin.max_amount)
+        rate = round(g.const_admin.rate)
+        max_amount = round(g.const_admin.max_amount)
     except:
         pass    
     carousel_photos = None #фото для карусели
@@ -67,15 +69,7 @@ def index():#главная страница
     if carousel_photos_len is not None and carousel_photos_len>0:
         show_carousel = True
     else:
-        show_carousel = False    
-    #код карты с Яндекса:
-    #3A6ad5fb6fb828ebef9b9e4e62b4139f4891e3a5a32a31c0229d3db9144c530b61
-    #url профиля инстраграм:
-    #https://instagram.com/dressidea_coworking?igshid=1pzb8ed89vuux
-    #адрес:
-    #Алматы, пр. Абая 143 (угол ул. Гагарина), 5 этаж, каб. 514
-    #имя инсты:
-    #@dressidea_coworking
+        show_carousel = False
     return render_template('index.html',title=title, carousel_photos=carousel_photos, carousel_photos_len=carousel_photos_len, \
                         show_carousel=show_carousel, rate = rate, max_amount = max_amount, items = items)
 
