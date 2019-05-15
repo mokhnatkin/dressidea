@@ -29,10 +29,13 @@
             </p>
         </div>
         <div class="col-md-6 col-sm-12 col-xs-12">
-                <p></p><p></p><p></p>
-                <img style="max-width:{{g.const_public.ya_map_width}}px" src="{{ url_for('get_path_to_static',fname='full_logo.png') }}" alt="Швейный коворкинг"><!-- Большое лого -->
-                <p></p><p></p><p></p>
+            <p></p><p></p><p></p>
+            <div class="container" style="max-width:{{g.const_public.ya_map_width}}px">
+                <img style="max-width:100%" src="{{ url_for('get_path_to_static',fname='full_logo.png') }}" alt="Швейный коворкинг"><!-- Большое лого -->
+            </div>
+            <p></p><p></p><p></p>
             {% if show_carousel %}
+            <div class="container" style="max-width:100%">
                 <div id="myCarousel" class="carousel slide" data-ride="carousel" style="max-width:{{g.const_public.ya_map_width}}px"><!-- Карусель -->
                     <!-- Indicators -->
                     <ol class="carousel-indicators">
@@ -49,14 +52,14 @@
                         {% for i in range(carousel_photos_len) %}
                             {% if i==0 %}
                                 <div class="item active">
-                                    <img style="max-width:{{g.const_public.ya_map_width}}px" src="{{ url_for('get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
+                                    <img src="{{ url_for('get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
                                 </div>
                             {% else %}                  
                                 <div class="item">
-                                    <img style="max-width:{{g.const_public.ya_map_width}}px" src="{{ url_for('get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
+                                    <img src="{{ url_for('get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
                                 </div>
                             {% endif %}
-                        {% endfor %} 
+                        {% endfor %}
                     </div>                  
                     <!-- Left and right controls -->
                     <a class="left carousel-control" href="#myCarousel" data-slide="prev">
@@ -68,6 +71,7 @@
                         <span class="sr-only">Вперед</span>
                     </a>
                 </div>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -102,15 +106,17 @@
         </div>
         <div class="col-md-6 col-sm-12 col-xs-12" id="ya_map"><!-- Яндекс Карта -->
             <p></p><p></p><p></p>
-            {% if g.const_public.ya_map_id %}
-                {% if g.const_public.ya_map_static %}
-                <a href="https://yandex.ru/maps/?um=constructor%{{ g.const_public.ya_map_id }}&amp;source=constructorStatic" target="_blank">
-                    <img src="https://api-maps.yandex.ru/services/constructor/1.0/static/?um=constructor%3A6ad5fb6fb828ebef9b9e4e62b4139f4891e3a5a32a31c0229d3db9144c530b61&amp;width={{ g.const_public.ya_map_width }}&amp;height={{ g.const_public.ya_map_height }}&amp;lang=ru_RU" alt="" style="border: 0;" />
-                </a>
-                {% else %}
-                    <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%{{ g.const_public.ya_map_id }}&amp;width={{ g.const_public.ya_map_width }}&amp;height={{ g.const_public.ya_map_height }}&amp;lang=ru_RU&amp;scroll=true"></script>
+            <div class="container" style="max-width:{{g.const_public.ya_map_width}}px">
+                {% if g.const_public.ya_map_id %}
+                    {% if g.const_public.ya_map_static %}
+                    <a href="https://yandex.ru/maps/?um=constructor%{{ g.const_public.ya_map_id }}&amp;source=constructorStatic" target="_blank">
+                        <img src="https://api-maps.yandex.ru/services/constructor/1.0/static/?um=constructor%3A6ad5fb6fb828ebef9b9e4e62b4139f4891e3a5a32a31c0229d3db9144c530b61&amp;width={{ g.const_public.ya_map_width }}&amp;height={{ g.const_public.ya_map_height }}&amp;lang=ru_RU" alt="" style="max-width:100%; border: 0;" />
+                    </a>
+                    {% else %}
+                        <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%{{ g.const_public.ya_map_id }}&amp;width={{ g.const_public.ya_map_width }}&amp;height={{ g.const_public.ya_map_height }}&amp;lang=ru_RU&amp;scroll=true"></script>
+                    {% endif %}
                 {% endif %}
-            {% endif %}
+            </div>
         </div>        
     </div>
     <br><br>
