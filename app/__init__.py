@@ -1,7 +1,7 @@
 from flask import Flask, request
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+#from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
@@ -16,7 +16,7 @@ app.config.from_object(Config)
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://dressidea:fjEidk89@localhost:3306/dressidea'
 #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-migrate = Migrate(app,db)
+#migrate = Migrate(app,db)
 login = LoginManager(app)
 login.login_view = 'login'
 bootstrap = Bootstrap(app)

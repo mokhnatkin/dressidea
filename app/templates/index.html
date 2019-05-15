@@ -33,7 +33,7 @@
                 <img style="max-width:{{g.const_public.ya_map_width}}px" src="{{ url_for('get_path_to_static',fname='full_logo.png') }}" alt="Швейный коворкинг"><!-- Большое лого -->
                 <p></p><p></p><p></p>
             {% if show_carousel %}
-                <div id="myCarousel" class="carousel slide" data-ride="carousel"><!-- Карусель -->
+                <div id="myCarousel" class="carousel slide" data-ride="carousel" style="max-width:{{g.const_public.ya_map_width}}px"><!-- Карусель -->
                     <!-- Indicators -->
                     <ol class="carousel-indicators">
                         {% for i in range(carousel_photos_len) %}
