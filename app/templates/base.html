@@ -109,11 +109,13 @@
     </div>
     {% block footer %}
         {% if current_user.is_anonymous %}
-            <footer>
-                &copy; 2019 Швейный коворкинг DressIdea, Алматы
-                <a href="{{ url_for('index') }}#contacts">Контакты</a>
-                <a href="{{ url_for('gallery') }}">Галерея</a>
-            </footer>
+            <div class="container">
+                <footer>
+                    &copy; 2019 Швейный коворкинг DressIdea, Алматы
+                    <a href="{{ url_for('index') }}#contacts">Контакты</a>
+                    <a href="{{ url_for('gallery') }}">Галерея</a>
+                </footer>
+            </div>
         {% endif %}
     {% endblock footer %}    
 {% endblock %}
@@ -122,5 +124,13 @@
     {{ super() }}
     {{ moment.include_moment() }}
     {{ moment.locale(g.locale) }}
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">    
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-140233765-1"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-140233765-1');
+    </script>
 {% endblock %}
