@@ -9,6 +9,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from datetime import timedelta
 from flask_babel import get_locale
 import os
 from functools import wraps
@@ -519,7 +520,7 @@ def add_visit_for_client(client_id = None):
         visit = Visit(client_id=client_id,comment=form.comment.data)
         db.session.add(visit)
         db.session.commit()
-        return redirect(url_for('visits_today'))
+        return redirect(url_for('visits_today',param='today'))
     return render_template('add_visit_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
@@ -532,12 +533,12 @@ def add_booking_for_client(client_id = None):
     form = BookingForm()
     if form.validate_on_submit():
         UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
-        begin = form.begin.data + UTC_OFFSET_TIMEDELTA
-        end = form.end.data + UTC_OFFSET_TIMEDELTA
+        begin = datetime.combine(form.begin_d.data, form.begin_t.data) + UTC_OFFSET_TIMEDELTA
+        end = datetime.combine(form.end_d.data, form.end_t.data) + UTC_OFFSET_TIMEDELTA
         booking = Booking(client_id=client_id,begin=begin,end=end,comment=form.comment.data)
         db.session.add(booking)
         db.session.commit()
-        return redirect(url_for('all_bookings'))
+        return redirect(url_for('all_bookings',param='future'))
     return render_template('add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
@@ -552,17 +553,29 @@ def compute_amount(begin):#рассчитать стоимость визита
     return amount
 
 
-@app.route('/visits_today')#визиты сегодня, коворкинг LIVE
+@app.route('/visits_today/<param>')#визиты
 @login_required
-def visits_today():
+def visits_today(param=None):
+    if param is None:
+        param = 'today'    
     title = 'Сейчас в коворкинге'
     now_moment = datetime.utcnow()
-    now_moment_date = now_moment.date()    
-    visits = Visit.query.join(Client) \
+    tomor_date = datetime.utcnow().date() + timedelta(days=1)
+    yest_date = datetime.utcnow().date()
+    visits = None
+    if param == 'all':#все визиты
+        descr = 'Все визиты'
+        visits = Visit.query.join(Client) \
                 .with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
-                .filter(Visit.begin >= now_moment_date) \
-                .order_by(Visit.begin.desc()).all()
-    return render_template('visits_today.html',title=title,visits=visits,now_moment=now_moment,compute_amount=compute_amount,now_moment_date=now_moment_date)
+                .order_by(Visit.begin).all()
+    elif param == 'today':#сегодняшние
+        descr = 'Все визиты'
+        visits = Visit.query.join(Client) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
+                .filter(Visit.begin > yest_date) \
+                .filter(Visit.begin < tomor_date) \
+                .order_by(Visit.begin).all()
+    return render_template('visits_today.html',title=title,visits=visits,now_moment=now_moment,compute_amount=compute_amount,descr=descr)
 
 
 @app.route('/close_visit/<visit_id>')#завершить визит
@@ -573,17 +586,38 @@ def close_visit(visit_id=None):
     visit.amount = amount
     visit.end = datetime.utcnow()    
     db.session.commit()    
-    return redirect(url_for('visits_today'))
+    return redirect(url_for('visits_today',param='today'))
 
 
-@app.route('/all_bookings')#все брони
+@app.route('/all_bookings/<param>')#брони
 @login_required
-def all_bookings():
+def all_bookings(param=None):
+    if param is None:
+        param = 'future'
     title = 'Список броней'
-    bookings = Booking.query.join(Client) \
+    now_moment = datetime.utcnow()
+    tomor_date = datetime.utcnow().date() + timedelta(days=1)
+    yest_date = datetime.utcnow().date()
+    bookings = None
+    if param == 'all':#все брони
+        descr = 'Все брони'
+        bookings = Booking.query.join(Client) \
                     .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
                     .order_by(Booking.begin).all()
-    return render_template('all_bookings.html',title=title,bookings=bookings)
+    elif param == 'today':#сегодняшние
+        descr = 'Брони на сегодня'
+        bookings = Booking.query.join(Client) \
+                    .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
+                    .filter(Booking.begin > yest_date) \
+                    .filter(Booking.begin < tomor_date) \
+                    .order_by(Booking.begin).all()
+    elif param == 'future':#будущие
+        descr = 'Брони на будущее'
+        bookings = Booking.query.join(Client) \
+                    .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
+                    .filter(Booking.begin >= now_moment) \
+                    .order_by(Booking.begin).all()
+    return render_template('all_bookings.html',title=title,bookings=bookings,descr=descr)
 
 
 @app.route('/change_booking_status_positive/<booking_id>')#изменить статус брони - пришел
@@ -614,8 +648,8 @@ def change_client_info(client_id=None):
     client = Client.query.filter(Client.id == client_id).first()
     if request.method == 'GET':
         form = ClientChangeForm(obj=client)
-        current_source = show_source_name(client.source_id)
-        #form.source.data = int(client.source_id)
+        if client.source_id is not None:
+            current_source = show_source_name(client.source_id)
     if form.validate_on_submit():
         client.name = form.name.data
         client.phone = form.phone.data
@@ -628,4 +662,28 @@ def change_client_info(client_id=None):
         flash('Данные клиента изменены!')
         return redirect(url_for('clients'))
     return render_template('add_client.html', title=title,form=form,descr=descr,current_source=current_source)
+
+
+@app.route('/edit_booking/<booking_id>',methods=['GET', 'POST'])#изменить данные брони
+@login_required
+def edit_booking(booking_id=None):
+    title = 'Изменить данные брони'
+    descr = 'Здесь можно изменить данные брони'
+    form = BookingForm()
+    booking = Booking.query.filter(Booking.id == booking_id).first()
+    UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
+    if request.method == 'GET':        
+        form.begin_d.data = (booking.begin-UTC_OFFSET_TIMEDELTA).date()
+        form.begin_t.data = (booking.begin-UTC_OFFSET_TIMEDELTA).time()
+        form.end_d.data = (booking.end-UTC_OFFSET_TIMEDELTA).date()
+        form.end_t.data = (booking.end-UTC_OFFSET_TIMEDELTA).time()
+        form.comment.data = booking.comment
+    if form.validate_on_submit():
+        booking.begin = datetime.combine(form.begin_d.data, form.begin_t.data) + UTC_OFFSET_TIMEDELTA
+        booking.end = datetime.combine(form.end_d.data, form.end_t.data) + UTC_OFFSET_TIMEDELTA
+        booking.comment = form.comment.data
+        db.session.commit()
+        flash('Данные брони изменены!')
+        return redirect(url_for('all_bookings',param='all'))
+    return render_template('add_booking_for_client.html', title=title,form=form,descr=descr)
 

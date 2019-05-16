@@ -1,6 +1,16 @@
 {% extends 'bootstrap/base.html' %}
 
 {% block head %}
+    {% if current_user.is_anonymous and not g.debug_flag %} <!-- Google Analytics should track only clients, not users -->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ g.const_admin.google_analytics_tracking_id }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '{{ g.const_admin.google_analytics_tracking_id }}');
+        </script>
+    {% endif %}
     <title>
             {% if title %}{{ title }}
             {% else %}Швейная мастерская - коворкинг, Алматы
@@ -50,10 +60,10 @@
                 </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-left">
-                    <li><a class="navbar-brand" href="{{ url_for('visits_today') }}">LIVE</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('visits_today',param='today') }}">LIVE</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('add_client') }}">+ клиента</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('add_visit_booking') }}">+ визит / бронь</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('all_bookings') }}">Брони</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('all_bookings',param='today') }}">Брони</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>                    
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
@@ -133,14 +143,5 @@
     {{ moment.include_moment() }}
     {{ moment.locale(g.locale) }}
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-    {% if current_user.is_anonymous and not g.debug_flag %} <!-- Google Analytics should track only clients, not users -->
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id={{ g.const_admin.google_analytics_tracking_id }}"></script>
-        <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '{{ g.const_admin.google_analytics_tracking_id }}');
-        </script>
-    {% endif %}
+
 {% endblock %}

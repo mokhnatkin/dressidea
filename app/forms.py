@@ -1,8 +1,11 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, DateTimeField, DecimalField, IntegerField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, DecimalField, IntegerField
+from wtforms import DateTimeField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from app.models import User, ClientSource
+from wtforms.fields.html5 import DateField
+from wtforms.fields.html5 import TimeField
 
 
 class LoginForm(FlaskForm):#вход
@@ -125,9 +128,11 @@ class VisitForm(FlaskForm):#добавляем визит
     submit = SubmitField('Добавить визит')
 
 
-class BookingForm(FlaskForm):#добавляем бронь
-    begin = DateTimeField('Начало (в формате дд.мм.гггг ЧЧ:ММ, например 12.05.2019 15:00)',format='%d.%m.%Y %H:%M',validators=[DataRequired()])
-    end = DateTimeField('Окончание (в формате дд.мм.гггг ЧЧ:ММ, например 12.05.2019 16:00)',format='%d.%m.%Y %H:%M',validators=[DataRequired()])
+class BookingForm(FlaskForm):#добавляем / изменяем бронь
+    begin_d = DateField('Начало, дата', format='%Y-%m-%d',validators=[DataRequired()])
+    begin_t= TimeField('Начало, время', format='%H:%M',validators=[DataRequired()])
+    end_d = DateField('Конец, дата', format='%Y-%m-%d',validators=[DataRequired()])
+    end_t= TimeField('Конец, время', format='%H:%M',validators=[DataRequired()])
     comment = StringField('Комментарий (необязательно)',validators=[Length(min=0,max=200)])
-    submit = SubmitField('Добавить бронь')
+    submit = SubmitField('Добавить / изменить бронь')
 

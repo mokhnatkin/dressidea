@@ -1,7 +1,14 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-<h1>Сейчас в коворкинге</h1>
+<h1>Визиты в коворкинг</h1>
+<table class="table">
+    <tr class="table-active">
+        <td><a href="{{ url_for('visits_today',param='today') }}">Сегодня</a></td>
+        <td><a href="{{ url_for('visits_today',param='all') }}">Все визиты</a></td>
+    </tr>
+ </table>
+<h3>{{ descr }}</h3>
 <div>
     <table class="table table-hover">
         <tr>
