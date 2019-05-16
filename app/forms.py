@@ -83,7 +83,7 @@ class ClientSourceForm(FlaskForm):#добавить / изменить исто�
     submit = SubmitField('Добавить / изменить')
 
 
-class ClientForm(FlaskForm):#добавляем / изменяем данные клиента
+class ClientForm(FlaskForm):#добавляем клиента
     sources = ClientSource.query \
                 .with_entities(ClientSource.id,ClientSource.name) \
                 .filter(ClientSource.active==True).all()
@@ -97,7 +97,22 @@ class ClientForm(FlaskForm):#добавляем / изменяем данные 
     insta = StringField('Instagram; образец @dressidea_coworking',validators=[Length(max=50)])
     source = SelectField('Откуда пришел клиент?',choices = sources_str)
     comment = TextAreaField('Комментарий',validators=[Length(max=200)])
-    submit = SubmitField('Добавить / изменить')
+    submit = SubmitField('Добавить')
+
+
+class ClientChangeForm(FlaskForm):#изменяем данные клиента
+    sources = ClientSource.query.with_entities(ClientSource.id,ClientSource.name).all()
+    sources_str = list()
+    sources_str.append(('not_set','--выберите--'))
+    for s in sources:
+        s_id = str(s[0])
+        sources_str.append((s_id,s[1]))
+    name = StringField('Имя',validators=[DataRequired(), Length(min=1,max=50)])
+    phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
+    insta = StringField('Instagram; образец @dressidea_coworking',validators=[Length(max=50)])
+    source = SelectField('Откуда пришел клиент?',choices = sources_str)
+    comment = TextAreaField('Комментарий',validators=[Length(max=200)])
+    submit = SubmitField('Изменить')
 
 
 class ClientSearchForm(FlaskForm):#ищем клиента для добавления брони / визита

@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, flash, redirect, url_for, request, g, send_file
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
-                        ClientForm, VisitForm, BookingForm, ClientSearchForm
+                        ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
                         Client, Visit, Booking
 from flask_login import current_user, login_user, logout_user, login_required
@@ -53,7 +53,7 @@ def get_current_user_role():#возвращает роль текущего по
 @app.route('/')
 @app.route('/index')
 def index():#главная страница
-    title = 'Швейный коворкинг Алматы'
+    title = 'Швейный коворкинг, город Алматы'
     items = ItemInside.query.filter(ItemInside.active==True).order_by(ItemInside.num).all()
     rate = None
     max_amount = None
@@ -157,10 +157,8 @@ def edit_file(fid = None):
     form = PhotoEditForm()    
     descr = 'Здесь можно изменить заголовок, описание или тип фото'
     photo = Photo.query.filter(Photo.id == fid).first()
-    if request.method == 'GET':        
-        form.photo_type.data = photo.photo_type
-        form.caption.data = photo.caption
-        form.descr.data = photo.descr
+    if request.method == 'GET':
+        form = PhotoEditForm(obj=photo)
     if form.validate_on_submit():
         photo.photo_type = form.photo_type.data
         photo.caption = form.caption.data
@@ -210,7 +208,7 @@ def downloadFile(fname = None):
 
 
 @app.route('/get_path_to_static/<fname>')#путь к директории с фото, для отображения фото
-def get_path_to_static(fname = None):    
+def get_path_to_static(fname = None):
     p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],fname)
     return send_file(p)
 
@@ -257,9 +255,7 @@ def const_admin():
         pass
     if request.method == 'GET':
         if const_set is not None:
-            form.rate.data = const_set.rate
-            form.max_amount.data = const_set.max_amount
-            form.google_analytics_tracking_id.data = const_set.google_analytics_tracking_id
+            form = Const_adminForm(obj=const_set)
     if form.validate_on_submit():
         if const_set is not None:
             const_set.rate=form.rate.data
@@ -288,17 +284,7 @@ def const_public():
         pass
     if request.method == 'GET':#показываем данные из БД в форме
         if const_set is not None:
-            form.descr.data = const_set.descr
-            form.working_hours.data = const_set.working_hours
-            form.show_working_hours.data = const_set.show_working_hours
-            form.addr.data = const_set.addr
-            form.ya_map_id.data = const_set.ya_map_id
-            form.ya_map_width.data = const_set.ya_map_width
-            form.ya_map_height.data = const_set.ya_map_height
-            form.ya_map_static.data = const_set.ya_map_static
-            form.phone.data = const_set.phone
-            form.insta.data = const_set.insta
-            form.insta_url.data = const_set.insta_url
+            form = Const_publicForm(obj=const_set)
     if form.validate_on_submit():#обновляем данные в БД
         if const_set is not None:
             const_set.descr = form.descr.data
@@ -369,9 +355,7 @@ def edit_item_inside(item_id = None):
     descr = 'Здесь изменяется список оборудования в коворкинге'
     item = ItemInside.query.filter(ItemInside.id == item_id).first()
     if request.method == 'GET':
-        form.num.data = item.num
-        form.name.data = item.name
-        form.active.data = item.active
+        form = ItemInsideForm(obj=item)
     if form.validate_on_submit():
         item.num = form.num.data
         item.name = form.name.data
@@ -451,9 +435,8 @@ def edit_source(item_id = None):
     form = ClientSourceForm()
     descr = 'Здесь изменяется список источников (откуда приходят клиенты)'
     item = ClientSource.query.filter(ClientSource.id == item_id).first()
-    if request.method == 'GET':        
-        form.name.data = item.name
-        form.active.data = item.active
+    if request.method == 'GET':
+        form = ClientSourceForm(obj=item)
     if form.validate_on_submit():
         item.name = form.name.data
         item.active = form.active.data
@@ -463,7 +446,7 @@ def edit_source(item_id = None):
     return render_template('sources.html', title=title,form=form,descr=descr)
 
 
-@app.route('/add_client',methods=['GET','POST'])#дополнить список источников
+@app.route('/add_client',methods=['GET','POST'])#добавить клиента
 @login_required
 def add_client():
     title='Добавить клиента'
@@ -479,9 +462,9 @@ def add_client():
         name=form.name.data
         if phone_already_in_DB is None:
             if source_id == 'not_set':
-                client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)                
+                client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)
             else:
-                client = Client(name=name,phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)                
+                client = Client(name=name,phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)
             db.session.add(client)
             db.session.commit()
             flash('Клиент добавлен. Теперь можно добавить визит или бронь.')
@@ -489,6 +472,21 @@ def add_client():
             flash('Ошибка - клиент с таким телефоном уже есть в базе')
         return redirect(url_for('add_client'))
     return render_template('add_client.html',title=title,descr=descr,form=form)
+
+
+def show_source_name(source_id):#возвращает имя канала исходя из id
+    s = ClientSource.query.filter(ClientSource.id == source_id).first()
+    name = s.name
+    return name
+
+
+@app.route('/clients')#все клиенты
+@login_required
+def clients():
+    title = 'Список клиентов'
+    descr = 'Список всех клиентов'
+    clients = Client.query.order_by(Client.timestamp.desc()).all()
+    return render_template('clients.html',title=title,descr=descr,clients=clients,show_source_name=show_source_name)
 
 
 @app.route('/add_visit_booking',methods=['GET', 'POST'])#список клиентов для добавления визита или брони
@@ -604,3 +602,30 @@ def change_booking_status_negative(booking_id=None):
     booking.attended = False
     db.session.commit()
     return redirect(url_for('all_bookings'))
+
+
+@app.route('/change_client_info/<client_id>',methods=['GET', 'POST'])#изменить данные клиента
+@login_required
+def change_client_info(client_id=None):
+    title = 'Изменить данные клиента'
+    descr = 'Здесь можно изменить данные клиента'
+    current_source = None
+    form = ClientChangeForm()
+    client = Client.query.filter(Client.id == client_id).first()
+    if request.method == 'GET':
+        form = ClientChangeForm(obj=client)
+        current_source = show_source_name(client.source_id)
+        #form.source.data = int(client.source_id)
+    if form.validate_on_submit():
+        client.name = form.name.data
+        client.phone = form.phone.data
+        client.insta = form.insta.data
+        source_id = form.source.data
+        if source_id != 'not_set':
+            client.source_id = source_id
+        client.comment = form.comment.data
+        db.session.commit()
+        flash('Данные клиента изменены!')
+        return redirect(url_for('clients'))
+    return render_template('add_client.html', title=title,form=form,descr=descr,current_source=current_source)
+

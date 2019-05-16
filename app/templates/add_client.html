@@ -2,8 +2,11 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    <h1>Создать карточку клиента</h1>
+    <h1>Создать / изменить карточку клиента</h1>
     <p>{{ descr }}</p>
+    {% if current_source %}
+        <p>Текущий источник (откуда пришел клиента) - <b>{{ current_source }}</b>. Изменить можно ниже.</p>
+    {% endif %}
     <div class="row">
         <div class="col-md-4">
             {{ wtf.quick_form(form) }}

@@ -1,9 +1,15 @@
 {% extends 'bootstrap/base.html' %}
 
-{% block title %}
-    {% if title %}{{ title }}
-    {% else %}Швейная мастерская - коворкинг, Алматы
-    {% endif %}
+{% block head %}
+    <title>
+            {% if title %}{{ title }}
+            {% else %}Швейная мастерская - коворкинг, Алматы
+            {% endif %}
+    </title>    
+    <link rel="icon" href="{{ url_for('get_path_to_static',fname='favicon.ico') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">    
 {% endblock %}
 
 {% block navbar %}
@@ -44,10 +50,11 @@
                 </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-left">
-                    <li><a class="navbar-brand" href="{{ url_for('visits_today') }}">Коворкинг LIVE</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('add_client') }}">Создать клиента</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('add_visit_booking') }}">Создать визит / бронь</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('visits_today') }}">LIVE</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('add_client') }}">+ клиента</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('add_visit_booking') }}">+ визит / бронь</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('all_bookings') }}">Брони</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>                    
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -112,8 +119,9 @@
             <div class="container">
                 <footer style="COLOR: #542947">
                     &copy; 2019 Швейный коворкинг DressIdea, Алматы
+                    <a href="{{ url_for('index') }}">Главная</a>
                     <a href="{{ url_for('index') }}#contacts">Контакты</a>
-                    <a href="{{ url_for('gallery') }}">Галерея</a>
+                    <a href="{{ url_for('gallery') }}">Фото</a>
                 </footer>
             </div>
         {% endif %}
