@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, flash, redirect, url_for, request, g, send_file
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
-                        ClientForm, VisitForm, BookingForm
+                        ClientForm, VisitForm, BookingForm, ClientSearchForm
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
                         Client, Visit, Booking
 from flask_login import current_user, login_user, logout_user, login_required
@@ -26,6 +26,12 @@ def before_request():
         pass
     g.const_public = const_public
     g.const_admin = const_admin
+    debug_flag = os.environ.get('FLASK_DEBUG')
+    if debug_flag == '1':
+        g.debug_flag = True #признак - находится ли приложение в отладке
+    else:
+        g.debug_flag = False
+    
 
 #A function defintion which will work as a decorator for each view – we can call this with @required_roles
 def required_roles(*roles):
@@ -39,9 +45,9 @@ def required_roles(*roles):
         return wrapped
     return wrapper
  
+
 def get_current_user_role():#возвращает роль текущего пользователя
-    return current_user.role
-   #return g.user.role
+    return current_user.role  
     
 
 @app.route('/')
@@ -408,7 +414,7 @@ def item_inside():
 
 @app.route('/admin')#админка - общее описание
 @login_required
-def admin():
+def admin():    
     return render_template('admin.html',title='Админка')
 
 
@@ -490,9 +496,18 @@ def add_client():
 def add_visit_booking():
     title='Добавить визит или бронь'
     descr = 'Перед добавлением визита / брони клиента нужно создать, после чего клиента можно выбрать из списка ниже. Если нужного клиента нет, воспользуйтесь формой поиска.'
-    #form = ClientForm()
+    form = ClientSearchForm()
+    client_by_phone = None
+    client_found = False
     clients = Client.query.order_by(Client.timestamp.desc()).limit(10).all()
-    return render_template('add_visit_booking.html',title=title,descr=descr,clients=clients)
+    if form.validate_on_submit():
+        try:
+            client_by_phone = Client.query.filter(Client.phone == form.phone.data).first()
+            client_found = True
+            flash('Клиент найден!')
+        except:
+            flash('Клиент с данным номером не найден в базе. Его нужно создать.')
+    return render_template('add_visit_booking.html',title=title,descr=descr,clients=clients,form=form,client_found=client_found,client_by_phone=client_by_phone)
 
 
 @app.route('/add_visit/<client_id>',methods=['GET', 'POST'])
@@ -543,9 +558,13 @@ def compute_amount(begin):#рассчитать стоимость визита
 @login_required
 def visits_today():
     title = 'Сейчас в коворкинге'
-    visits = Visit.query.join(Client).with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount).all()
     now_moment = datetime.utcnow()
-    return render_template('visits_today.html',title=title,visits=visits,now_moment=now_moment,compute_amount=compute_amount)
+    now_moment_date = now_moment.date()    
+    visits = Visit.query.join(Client) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
+                .filter(Visit.begin >= now_moment_date) \
+                .order_by(Visit.begin.desc()).all()
+    return render_template('visits_today.html',title=title,visits=visits,now_moment=now_moment,compute_amount=compute_amount,now_moment_date=now_moment_date)
 
 
 @app.route('/close_visit/<visit_id>')#завершить визит
@@ -569,10 +588,19 @@ def all_bookings():
     return render_template('all_bookings.html',title=title,bookings=bookings)
 
 
-@app.route('/change_booking_status/<booking_id>')#изменить статус брони
+@app.route('/change_booking_status_positive/<booking_id>')#изменить статус брони - пришел
 @login_required
-def change_booking_status(booking_id=None):
+def change_booking_status_positive(booking_id=None):
     booking = Booking.query.filter(Booking.id == booking_id).first()
     booking.attended = True
+    db.session.commit()
+    return redirect(url_for('all_bookings'))
+
+
+@app.route('/change_booking_status_negative/<booking_id>')#изменить статус брони - не пришел
+@login_required
+def change_booking_status_negative(booking_id=None):
+    booking = Booking.query.filter(Booking.id == booking_id).first()
+    booking.attended = False
     db.session.commit()
     return redirect(url_for('all_bookings'))

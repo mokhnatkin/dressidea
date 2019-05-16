@@ -100,6 +100,11 @@ class ClientForm(FlaskForm):#добавляем / изменяем данные 
     submit = SubmitField('Добавить / изменить')
 
 
+class ClientSearchForm(FlaskForm):#ищем клиента для добавления брони / визита
+    phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
+    submit = SubmitField('Найти')
+
+
 class VisitForm(FlaskForm):#добавляем визит
     comment = StringField('Комментарий (необязательно)',validators=[Length(min=0,max=200)])
     submit = SubmitField('Добавить визит')

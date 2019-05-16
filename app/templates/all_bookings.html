@@ -10,7 +10,8 @@
             <th>Начало</th>
             <th>Окончание</th>
             <th>Статус</th>
-            <th>Поменять статус</th>
+            <th>Поменять статус - пришел</th>
+            <th>Поменять статус - не пришел</th>
             <th>Комментарий</th>
         </tr>
         {% for b in bookings %}
@@ -20,17 +21,24 @@
             <td>{{ moment(b.begin).format('LLL') }}</td>
             <td>{{ moment(b.end).format('LLL') }}</td>
             <td>
-                {% if b.attended %}
+                {% if b.attended == None %}
+                    Статус не указан
+                {% elif b.attended %}
                     Пришел
                 {% else %}
-                    Не указано
+                    Не пришел
                 {% endif %}
             </td>
             <td>
-                {% if not b.attended %}
-                    <a href="{{ url_for('change_booking_status',booking_id=b.id) }}">Клиент пришел</a>
-                {% endif %}
+                {% if b.attended == None %}
+                    <a href="{{ url_for('change_booking_status_positive',booking_id=b.id) }}">Клиент пришел</a>
+                {% endif %}                
             </td>
+            <td>
+                {% if b.attended == None %}
+                    <a href="{{ url_for('change_booking_status_negative',booking_id=b.id) }}">Клиент НЕ пришел</a>
+                {% endif %}                
+            </td>            
             <td>{{ b.comment }}</td>
         </tr>
         {% endfor %}

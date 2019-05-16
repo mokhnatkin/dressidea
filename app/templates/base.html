@@ -22,7 +22,7 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-left">                    
                     <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts">Контакты</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('gallery') }}">Галерея</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('gallery') }}">Фото</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li><a class="navbar-brand" href="{{ g.const_public.insta_url }}"><i class="fab fa-instagram"></i></a></li>
@@ -120,18 +120,19 @@
     {% endblock footer %}    
 {% endblock %}
 
-
 {% block scripts %}
     {{ super() }}
     {{ moment.include_moment() }}
     {{ moment.locale(g.locale) }}
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ g.const_admin.google_analytics_tracking_id }}"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '{{ g.const_admin.google_analytics_tracking_id }}');
-    </script>
+    {% if current_user.is_anonymous and not g.debug_flag %} <!-- Google Analytics should track only clients, not users -->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ g.const_admin.google_analytics_tracking_id }}"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ g.const_admin.google_analytics_tracking_id }}');
+        </script>
+    {% endif %}
 {% endblock %}

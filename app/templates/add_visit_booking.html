@@ -1,26 +1,60 @@
 {% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-<h1>Добавить визит или бронь</h1>
-{{ descr }}
-<div>
-    <h2>Последние 10 клиентов</h2>
-    <table class="table table-hover">
-        <tr>
-            <th>Имя</th>
-            <th>Мобильный телефон</th>
-            <th>Добавить визит</th>
-            <th>Добавить бронь</th>
-        </tr>
-        {% for c in clients %}
-        <tr>
-            <td>{{ c.name }}</td>
-            <td>{{ c.phone }}</td>
-            <td><a href="{{ url_for('add_visit_for_client',client_id=c.id) }}">Добавить визит</a></td>
-            <td><a href="{{ url_for('add_booking_for_client',client_id=c.id) }}">Добавить бронь</a></td>
-        </tr>
-        {% endfor %}
-    </table>
+<div class="row">
+    <h1>Добавить визит или бронь</h1>
+    {{ descr }}
 </div>
+<div class="row">    
+    <div class="col-md-4">
+        <h3>Форма поиска клиента</h3>
+        {{ wtf.quick_form(form) }}
+    </div>
+</div>
+{% if client_found %}
+    <p></p><p></p>
+    <div class="row">
+        <div class="col-md-12">        
+            <table class="table table-hover">
+                <tr>
+                    <th>Имя</th>
+                    <th>Мобильный телефон</th>
+                    <th>Добавить визит</th>
+                    <th>Добавить бронь</th>
+                </tr>                
+                <tr>
+                    <td>{{ client_by_phone.name }}</td>
+                    <td>{{ client_by_phone.phone }}</td>
+                    <td><button type="button" class="btn btn-default"><a href="{{ url_for('add_visit_for_client',client_id=client_by_phone.id) }}">Добавить визит</a></button></td>
+                    <td><button type="button" class="btn btn-default"><a href="{{ url_for('add_booking_for_client',client_id=client_by_phone.id) }}">Добавить бронь</a></button></td>
+                </tr>                
+            </table>        
+        </div>
+    </div>
+{% endif %}
+{% if not client_found %}
+<div class="row">
+    <div class="col-md-12">
+        <h3>Последние 10 клиентов</h3>
+        <table class="table table-hover">
+            <tr>
+                <th>Имя</th>
+                <th>Мобильный телефон</th>
+                <th>Добавить визит</th>
+                <th>Добавить бронь</th>
+            </tr>
+            {% for c in clients %}
+            <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.phone }}</td>
+                <td><a href="{{ url_for('add_visit_for_client',client_id=c.id) }}">Добавить визит</a></td>
+                <td><a href="{{ url_for('add_booking_for_client',client_id=c.id) }}">Добавить бронь</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
