@@ -21,12 +21,12 @@
                 </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-left">                    
-                    <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts">Контакты</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('gallery') }}">Фото</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts" style="COLOR: #542947">Контакты</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('gallery') }}" style="COLOR: #542947">Фото</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a class="navbar-brand" href="{{ g.const_public.insta_url }}"><i class="fab fa-instagram"></i></a></li>
-                    <li><a class="navbar-brand" href="tel:{{ g.const_public.phone }}"><i class="fa fa-mobile"></i>&nbsp;{{ g.const_public.phone }}</a></li>                        
+                    <li><a class="navbar-brand" href="{{ g.const_public.insta_url }}" style="COLOR: #542947"><i class="fab fa-instagram"></i></a></li>
+                    <li><a class="navbar-brand" href="tel:{{ g.const_public.phone }}" style="COLOR: #542947"><i class="fa fa-mobile"></i>&nbsp;{{ g.const_public.phone }}</a></li>                        
                 </ul>                
             </div>
         </nav>
@@ -110,7 +110,7 @@
     {% block footer %}
         {% if current_user.is_anonymous %}
             <div class="container">
-                <footer>
+                <footer style="COLOR: #542947">
                     &copy; 2019 Швейный коворкинг DressIdea, Алматы
                     <a href="{{ url_for('index') }}#contacts">Контакты</a>
                     <a href="{{ url_for('gallery') }}">Галерея</a>
