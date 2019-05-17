@@ -1,4 +1,5 @@
-from app import app, db, ext
+from app import app, db
+#from app import ext
 from flask import render_template, flash, redirect, url_for, request, g, send_file, send_from_directory
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
@@ -83,9 +84,9 @@ def index():#главная страница
                         show_carousel=show_carousel, rate = rate, max_amount = max_amount, items = items, \
                         meta_description = meta_description, meta_keywords=meta_keywords)
 
-@ext.register_generator#addes index to sitemap.xml
-def index():    
-    yield 'index', {}
+#@ext.register_generator#addes index to sitemap.xml
+#def index():    
+    #yield 'index', {}
 
 
 @app.route('/login',methods=['GET','POST'])#вход
@@ -209,9 +210,9 @@ def gallery():
                         show_photos=show_photos, meta_description=meta_description,meta_keywords=meta_keywords)
 
 
-@ext.register_generator#addes gallery to sitemap.xml
-def gallery():    
-    yield 'gallery', {}
+#@ext.register_generator#addes gallery to sitemap.xml
+#def gallery():    
+    #yield 'gallery', {}
 
 
 @app.route('/files/<fname>')#файл для скачивания на комп
@@ -703,5 +704,6 @@ def edit_booking(booking_id=None):
 
 
 @app.route('/robots.txt')
+@app.route('/sitemap.xml')
 def static_from_root():
     return get_path_to_static(request.path[1:])    
