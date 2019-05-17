@@ -1,0 +1,2 @@
+User-agent: *
+Disallow: /get_path_to_static/

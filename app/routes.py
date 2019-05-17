@@ -1,5 +1,5 @@
-from app import app, db
-from flask import render_template, flash, redirect, url_for, request, g, send_file
+from app import app, db, ext
+from flask import render_template, flash, redirect, url_for, request, g, send_file, send_from_directory
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
                         ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm
@@ -82,6 +82,10 @@ def index():#главная страница
     return render_template('index.html',title=title, carousel_photos=carousel_photos, carousel_photos_len=carousel_photos_len, \
                         show_carousel=show_carousel, rate = rate, max_amount = max_amount, items = items, \
                         meta_description = meta_description, meta_keywords=meta_keywords)
+
+@ext.register_generator#addes index to sitemap.xml
+def index():    
+    yield 'index', {}
 
 
 @app.route('/login',methods=['GET','POST'])#вход
@@ -203,6 +207,11 @@ def gallery():
     return render_template('gallery.html',title=title,const_public=const_public, \
                         gallery_photos=gallery_photos,gallery_photos_len=gallery_photos_len, \
                         show_photos=show_photos, meta_description=meta_description,meta_keywords=meta_keywords)
+
+
+@ext.register_generator#addes gallery to sitemap.xml
+def gallery():    
+    yield 'gallery', {}
 
 
 @app.route('/files/<fname>')#файл для скачивания на комп
@@ -692,3 +701,7 @@ def edit_booking(booking_id=None):
         return redirect(url_for('all_bookings',param='all'))
     return render_template('add_booking_for_client.html', title=title,form=form,descr=descr)
 
+
+@app.route('/robots.txt')
+def static_from_root():
+    return get_path_to_static(request.path[1:])    
