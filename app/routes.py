@@ -734,6 +734,7 @@ def stat():
     visits = None
     total_stat = None
     stat_per_day = None
+    stat_per_day_len = None
     if form.validate_on_submit():
         begin_d = form.begin_d.data
         end_d = form.end_d.data  + timedelta(days=1)
@@ -748,7 +749,7 @@ def stat():
             show_stat = True
         except:
             flash('Не могу выгрузить данные для расчета статистики')
-    return render_template('stat.html', title=title,form=form,descr=descr,show_stat=show_stat,visits=visits ,\
+    return render_template('stat.html', title=title,form=form,descr=descr,show_stat=show_stat,\
                                         total_stat=total_stat,stat_per_day=stat_per_day,stat_per_day_len=stat_per_day_len)
 
 #session.query(Table.column, func.count(Table.column)).group_by(Table.column).all()

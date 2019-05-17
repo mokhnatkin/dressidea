@@ -20,7 +20,7 @@
         <p>Сумма: <b>{{ total_stat.sum }}</b></p>
     </div>
     {% endif %}
-    {% if stat_per_day_len>0 %}
+    {% if stat_per_day_len and stat_per_day_len>0 %}
     <div class="row">
         <h3>Статистика по дням</h3>
         <div class="col-md-12">
