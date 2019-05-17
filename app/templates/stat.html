@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="row">
+    <h1>Статистика</h1>
+    {{ descr }}
+</div>
+<div class="row">    
+    <div class="col-md-4">
+        <h3>Введите период выборки</h3>
+        {{ wtf.quick_form(form) }}
+    </div>
+</div>
+{% if show_stat %}
+    {% if total_stat %}
+    <div class="row">
+        <h3>Всего за выбранный период</h3>
+        <p>Визитов: <b> {{ total_stat.count }}</b></p>
+        <p>Сумма: <b>{{ total_stat.sum }}</b></p>
+    </div>
+    {% endif %}
+    {% if stat_per_day_len>0 %}
+    <div class="row">
+        <h3>Статистика по дням</h3>
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <tr>
+                        <th>День</th>
+                        <th>Визитов</th>
+                        <th>Сумма</th>
+                    </tr>
+                    {% for i in stat_per_day %}
+                    <tr>
+                        <td>{{ moment(i.date).format('LL') }}</td>
+                        <td>{{ i.count }}</td>
+                        <td>{{ i.sum }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td><b>ИТОГО</b></td>
+                        <td><b>{{ total_stat.count }}</b></td>
+                        <td><b>{{ total_stat.sum }}</b></td>                        
+                    </tr>
+                </table>
+            </div>
+        </div>    
+    </div>
+    {% endif %}
+{% endif %}
+
+{% endblock %}

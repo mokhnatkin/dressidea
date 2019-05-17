@@ -68,7 +68,8 @@
                     <li><a class="navbar-brand" href="{{ url_for('add_client') }}">+ клиента</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('add_visit_booking') }}">+ визит / бронь</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('all_bookings',param='today') }}">Брони</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>                    
+                    <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('stat') }}">Статистика</a></li>
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

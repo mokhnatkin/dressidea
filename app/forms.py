@@ -136,3 +136,8 @@ class BookingForm(FlaskForm):#добавляем / изменяем бронь
     comment = StringField('Комментарий (необязательно)',validators=[Length(min=0,max=200)])
     submit = SubmitField('Добавить / изменить бронь')
 
+
+class PeriodInputForm(FlaskForm):#указать период для статистики - с по
+    begin_d = DateField('Начало, дата', format='%Y-%m-%d',validators=[DataRequired()])
+    end_d = DateField('Конец, дата', format='%Y-%m-%d',validators=[DataRequired()])
+    submit = SubmitField('Показать')

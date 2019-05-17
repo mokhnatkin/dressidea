@@ -1,9 +1,9 @@
 from app import app, db
-#from app import ext
 from flask import render_template, flash, redirect, url_for, request, g, send_file, send_from_directory
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
-                        ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm
+                        ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
+                        PeriodInputForm
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
                         Client, Visit, Booking
 from flask_login import current_user, login_user, logout_user, login_required
@@ -14,6 +14,7 @@ from datetime import timedelta
 from flask_babel import get_locale
 import os
 from functools import wraps
+from sqlalchemy import func
 
 
 @app.before_request
@@ -83,10 +84,6 @@ def index():#главная страница
     return render_template('index.html',title=title, carousel_photos=carousel_photos, carousel_photos_len=carousel_photos_len, \
                         show_carousel=show_carousel, rate = rate, max_amount = max_amount, items = items, \
                         meta_description = meta_description, meta_keywords=meta_keywords)
-
-#@ext.register_generator#addes index to sitemap.xml
-#def index():    
-    #yield 'index', {}
 
 
 @app.route('/login',methods=['GET','POST'])#вход
@@ -208,11 +205,6 @@ def gallery():
     return render_template('gallery.html',title=title,const_public=const_public, \
                         gallery_photos=gallery_photos,gallery_photos_len=gallery_photos_len, \
                         show_photos=show_photos, meta_description=meta_description,meta_keywords=meta_keywords)
-
-
-#@ext.register_generator#addes gallery to sitemap.xml
-#def gallery():    
-    #yield 'gallery', {}
 
 
 @app.route('/files/<fname>')#файл для скачивания на комп
@@ -705,5 +697,58 @@ def edit_booking(booking_id=None):
 
 @app.route('/robots.txt')
 @app.route('/sitemap.xml')
-def static_from_root():
-    return get_path_to_static(request.path[1:])    
+def static_from_root():#отдает файлы robots.txt и sitemap.xml для поисковых машин
+    return get_path_to_static(request.path[1:])
+
+def compute_stat(visits):
+    count = 0
+    sum = 0
+    dates = dict()
+    for v in visits:
+        count += 1
+        sum += v.amount
+        day = v.begin.date()
+        if day in dates:
+            dates[day] += 1
+        else:
+            dates[day] = 1
+    total_stat = {'count':count,'sum':round(sum)}
+    stat_per_day = list()
+    for key,val in dates.items():
+        amount = 0
+        for v in visits:
+            if v.begin.date() == key:
+                amount += v.amount
+        d = {'date':key,'count':val,'sum':round(amount)}
+        stat_per_day.append(d)    
+    return total_stat, stat_per_day
+
+
+@app.route('/stat',methods=['GET', 'POST'])#статистика за заданный период
+@login_required
+def stat():
+    title = 'Статистика визитов'
+    descr = 'Статистика визитов за выбранный период. Укажите нужный период (обе даты включительно).'
+    form = PeriodInputForm()
+    show_stat = False
+    visits = None
+    total_stat = None
+    stat_per_day = None
+    if form.validate_on_submit():
+        begin_d = form.begin_d.data
+        end_d = form.end_d.data  + timedelta(days=1)
+        try:#все закрытые визиты за заданный в форме период
+            visits = Visit.query \
+                .filter(Visit.end != None) \
+                .filter(Visit.begin >= begin_d) \
+                .filter(Visit.begin < end_d) \
+                .all()
+            total_stat, stat_per_day = compute_stat(visits)
+            stat_per_day_len = len(stat_per_day)
+            show_stat = True
+        except:
+            flash('Не могу выгрузить данные для расчета статистики')
+    return render_template('stat.html', title=title,form=form,descr=descr,show_stat=show_stat,visits=visits ,\
+                                        total_stat=total_stat,stat_per_day=stat_per_day,stat_per_day_len=stat_per_day_len)
+
+#session.query(Table.column, func.count(Table.column)).group_by(Table.column).all()
