@@ -11,28 +11,30 @@
     </div>    
     {% if items %}
     <h1>Уже в списке</h1>
-    <table class="table table-hover">
-        <tr>
-            <th>Порядковый номер</th>
-            <th>Название</th>
-            <th>Отображать на сайте?</th>
-            <th>Изменить</th>
-        </tr>
-        {% for i in items %}
-        <tr>
-            <td>{{ i.num }}</td>
-            <td>{{ i.name }}</td>
-            <td>
-                {% if i.active %}
-                    Да
-                {% else %}
-                    Нет
-                {% endif %}                
-            </td>
-            <td><a href="{{ url_for('edit_item_inside',item_id=i.id) }}">Изменить</a></td>
-        </tr>
-        {% endfor %}
-    </table>    
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>Порядковый номер</th>
+                <th>Название</th>
+                <th>Отображать на сайте?</th>
+                <th>Изменить</th>
+            </tr>
+            {% for i in items %}
+            <tr>
+                <td>{{ i.num }}</td>
+                <td>{{ i.name }}</td>
+                <td>
+                    {% if i.active %}
+                        Да
+                    {% else %}
+                        Нет
+                    {% endif %}                
+                </td>
+                <td><a href="{{ url_for('edit_item_inside',item_id=i.id) }}">Изменить</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
     {% endif %}
 
 {% endblock %}

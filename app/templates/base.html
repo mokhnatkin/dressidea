@@ -19,7 +19,11 @@
     <link rel="icon" href="{{ url_for('get_path_to_static',fname='favicon.ico') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">    
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    {% if current_user.is_anonymous %}
+        <meta name="description" content="{{ meta_description }}" />
+        <meta name="keywords" content="{{ meta_keywords }}" />
+    {% endif %}
 {% endblock %}
 
 {% block navbar %}

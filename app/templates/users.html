@@ -3,28 +3,30 @@
 {% block app_content %}
 <h1>Список пользователей</h1>
 <div>
-    <table class="table table-hover">
-        <tr>
-            <th>Имя пользователя</th>
-            <th>e-mail</th>
-            <th>Роль</th>
-            <th>Изменить роль</th>
-        </tr>
-        {% for u in users %}
-        <tr>
-            <td>{{ u.username }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.role }}</td>
-            <td>
-                {% if u.role == 'admin' %}
-                    <a href="{{ url_for('give_user_role',uid=u.id) }}">Разжаловать в обычные пользователи</a>
-                {% else %}
-                    <a href="{{ url_for('give_admin_role',uid=u.id) }}">Сделать админом</a>
-                {% endif %}                
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>Имя пользователя</th>
+                <th>e-mail</th>
+                <th>Роль</th>
+                <th>Изменить роль</th>
+            </tr>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.username }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.role }}</td>
+                <td>
+                    {% if u.role == 'admin' %}
+                        <a href="{{ url_for('give_user_role',uid=u.id) }}">Разжаловать в обычные пользователи</a>
+                    {% else %}
+                        <a href="{{ url_for('give_admin_role',uid=u.id) }}">Сделать админом</a>
+                    {% endif %}                
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </div>
 
 {% endblock %}

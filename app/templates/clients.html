@@ -3,34 +3,36 @@
 {% block app_content %}
 <h1>Список клиентов</h1>
 <div>
-    <table class="table table-hover">
-        <tr>
-            <th>Имя</th>
-            <th>Телефон</th>
-            <th>Инста</th>
-            <th>Источник</th>
-            <th>Создан</th>
-            <th>Комментарий</th>
-            <th>Изменить данные</th>
-        </tr>
-        {% for c in clients %}
-        <tr>
-            <td>{{ c.name }}</td>
-            <td>{{ c.phone }}</td>
-            <td>{{ c.insta }}</td>
-            <td>
-                {% if c.source_id %}
-                    {{ show_source_name(c.source_id) }}
-                {% endif %}
-            </td>
-            <td>{{ moment(c.timestamp).format('LLL') }}</td>
-            <td>{{ c.comment }}</td>
-            <td>
-                <a href="{{ url_for('change_client_info',client_id=c.id) }}">Изменить</a>
-            </td>           
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>Имя</th>
+                <th>Телефон</th>
+                <th>Инста</th>
+                <th>Источник</th>
+                <th>Создан</th>
+                <th>Комментарий</th>
+                <th>Изменить данные</th>
+            </tr>
+            {% for c in clients %}
+            <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.phone }}</td>
+                <td>{{ c.insta }}</td>
+                <td>
+                    {% if c.source_id %}
+                        {{ show_source_name(c.source_id) }}
+                    {% endif %}
+                </td>
+                <td>{{ moment(c.timestamp).format('LLL') }}</td>
+                <td>{{ c.comment }}</td>
+                <td>
+                    <a href="{{ url_for('change_client_info',client_id=c.id) }}">Изменить</a>
+                </td>           
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </div>
 
 {% endblock %}

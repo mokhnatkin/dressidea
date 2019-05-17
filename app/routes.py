@@ -55,6 +55,8 @@ def get_current_user_role():#возвращает роль текущего по
 @app.route('/index')
 def index():#главная страница
     title = 'Швейный коворкинг, город Алматы'
+    meta_description = 'Место для любителей шитья, город Алматы. Всё швейное оборудование в наличии. Оплата по времени.'
+    meta_keywords = 'Швейный коворкинг, швейная техника, швейное оборудование, аренда рабочего места, Алматы'
     items = ItemInside.query.filter(ItemInside.active==True).order_by(ItemInside.num).all()
     rate = None
     max_amount = None
@@ -78,7 +80,8 @@ def index():#главная страница
     else:
         show_carousel = False
     return render_template('index.html',title=title, carousel_photos=carousel_photos, carousel_photos_len=carousel_photos_len, \
-                        show_carousel=show_carousel, rate = rate, max_amount = max_amount, items = items)
+                        show_carousel=show_carousel, rate = rate, max_amount = max_amount, items = items, \
+                        meta_description = meta_description, meta_keywords=meta_keywords)
 
 
 @app.route('/login',methods=['GET','POST'])#вход
@@ -180,7 +183,9 @@ def files():
 
 @app.route('/gallery')#список загруженных файлов
 def gallery():
-    title = 'Фото швейного коворкинга, Алматы'
+    title = 'Фото швейного коворкинга Алматы'
+    meta_description = 'Фотографии швейного оборудования. Швейный коворкинг, место для любителей шитья, город Алматы.'
+    meta_keywords = 'Фото, шить, швейное оборудование, швейная мастерская, Алматы'
     gallery_photos = None #фото для карусели
     gallery_photos_len = None
     show_photos = False
@@ -197,7 +202,7 @@ def gallery():
         show_photos = False    
     return render_template('gallery.html',title=title,const_public=const_public, \
                         gallery_photos=gallery_photos,gallery_photos_len=gallery_photos_len, \
-                        show_photos=show_photos)
+                        show_photos=show_photos, meta_description=meta_description,meta_keywords=meta_keywords)
 
 
 @app.route('/files/<fname>')#файл для скачивания на комп
@@ -569,7 +574,7 @@ def visits_today(param=None):
                 .with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
                 .order_by(Visit.begin).all()
     elif param == 'today':#сегодняшние
-        descr = 'Все визиты'
+        descr = 'Сегодняшние визиты'
         visits = Visit.query.join(Client) \
                 .with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
                 .filter(Visit.begin > yest_date) \
