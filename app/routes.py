@@ -488,13 +488,51 @@ def show_source_name(source_id):#возвращает имя канала исх
     return name
 
 
-@app.route('/clients')#все клиенты
+@app.route('/clients',methods=['GET', 'POST'])#все клиенты
 @login_required
 def clients():
     title = 'Список клиентов'
-    descr = 'Список всех клиентов'
+    descr = 'Для поиска клиента воспользуйтесь формой поиска. Чтобы посмотреть детальную информацию по клиенту, нажмите на его имя.'
+    form = ClientSearchForm()
     clients = Client.query.order_by(Client.timestamp.desc()).all()
-    return render_template('clients.html',title=title,descr=descr,clients=clients,show_source_name=show_source_name)
+    client_found = False
+    client_by_phone = None
+    if form.validate_on_submit():
+        try:
+            client_by_phone = Client.query.filter(Client.phone == form.phone.data).first()
+            if client_by_phone is not None:
+                client_found = True                
+            else:                
+                flash('Клиент с данным номером не найден в базе.')
+        except:
+            flash('Не удалось выполнить поиск.')    
+    return render_template('clients.html',title=title,descr=descr,clients=clients, \
+                    show_source_name=show_source_name,form=form,\
+                    client_by_phone=client_by_phone,client_found=client_found)
+
+
+@app.route('/client_info/<client_id>')#информация по клиенту
+@login_required
+def client_info(client_id=None):
+    title = 'Информация по клиенту'
+    descr = 'Подробная информация по клиенту - брони, визиты'
+    show_visits = False
+    show_bookings = False
+    total_stat = None
+    client = Client.query.filter(Client.id == client_id).first()
+    visits = Visit.query.filter(Visit.client_id == client_id) \
+                        .filter(Visit.end != None) \
+                        .order_by(Visit.begin).all()                        
+    if visits is not None and len(visits)>0:
+        show_visits = True
+        total_stat, stat_per_day = compute_stat(visits)
+    bookings = Booking.query.filter(Booking.client_id == client_id) \
+                        .order_by(Booking.begin).all()
+    if bookings is not None and len(bookings)>0:
+        show_bookings = True                        
+    return render_template('client_info.html',title=title,descr=descr,client=client,\
+                            show_visits=show_visits,visits=visits,show_source_name=show_source_name, \
+                            show_bookings=show_bookings,bookings=bookings,total_stat=total_stat)
 
 
 @app.route('/add_visit_booking',methods=['GET', 'POST'])#список клиентов для добавления визита или брони
@@ -508,12 +546,16 @@ def add_visit_booking():
     clients = Client.query.order_by(Client.timestamp.desc()).limit(10).all()
     if form.validate_on_submit():
         try:
-            client_by_phone = Client.query.filter(Client.phone == form.phone.data).first()
-            client_found = True
-            flash('Клиент найден!')
+            client_by_phone = Client.query.filter(Client.phone == form.phone.data).first()            
+            if client_by_phone is not None:
+                client_found = True
+                flash('Клиент найден!')
+            else:                
+                flash('Клиент с данным номером не найден в базе. Его нужно создать.')
         except:
-            flash('Клиент с данным номером не найден в базе. Его нужно создать.')
-    return render_template('add_visit_booking.html',title=title,descr=descr,clients=clients,form=form,client_found=client_found,client_by_phone=client_by_phone)
+            flash('Не удалось выполнить поиск.')
+    return render_template('add_visit_booking.html',title=title,descr=descr,clients=clients,\
+                    form=form,client_found=client_found,client_by_phone=client_by_phone)
 
 
 @app.route('/add_visit/<client_id>',methods=['GET', 'POST'])
@@ -752,4 +794,3 @@ def stat():
     return render_template('stat.html', title=title,form=form,descr=descr,show_stat=show_stat,\
                                         total_stat=total_stat,stat_per_day=stat_per_day,stat_per_day_len=stat_per_day_len)
 
-#session.query(Table.column, func.count(Table.column)).group_by(Table.column).all()

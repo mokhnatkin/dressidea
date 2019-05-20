@@ -25,7 +25,7 @@
             </tr>
             {% for v in visits %}
             <tr>
-                <td>{{ v.name }}</td>
+                <td><a href="{{ url_for('client_info',client_id=v.id) }}">{{ v.name }}</a></td>
                 <td>{{ v.phone }}</td>
                 <td>{{ moment(v.begin).format('LLL') }}</td>
                 <td>
@@ -35,8 +35,9 @@
                 </td>
                 <td>
                     {% if not v.end %}
-                        {{ compute_amount(v.begin) }}</td>
+                        {{ compute_amount(v.begin) }}
                     {% endif %}
+                </td>
                 <td>
                     {% if v.end %}
                         {{ moment(v.end).format('LLL') }}
