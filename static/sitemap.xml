@@ -6,11 +6,27 @@
     xmlns:xhtml="http://www.w3.org/1999/xhtml"
 >
     <url>
-        <loc>https://dressidea.kz/index</loc>
+        <loc>https://dressidea.kz</loc>
         <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://dressidea.kz/index</loc>
+        <priority>0.99</priority>
     </url>
     <url>
         <loc>https://dressidea.kz/gallery</loc>
         <priority>0.8</priority>
     </url>
+    <url>
+        <loc>https://www.dressidea.kz</loc>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://www.dressidea.kz/index</loc>
+        <priority>0.99</priority>
+    </url>
+    <url>
+        <loc>https://www.dressidea.kz/gallery</loc>
+        <priority>0.8</priority>
+    </url>    
 </urlset>
