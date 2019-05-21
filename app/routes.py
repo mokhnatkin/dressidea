@@ -1,4 +1,4 @@
-from app import app, db
+﻿from app import app, db
 from flask import render_template, flash, redirect, url_for, request, g, send_file, send_from_directory
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
@@ -164,7 +164,7 @@ def delete_file(fid = None):
     if photo is not None:
         if photo.active:
             flash('Нельзя удалить фото, которое отображается на сайте. Сначала его нужно скрыть.')
-            redirect(url_for('files'))
+            return redirect(url_for('files'))
         else:
             try:
                 os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo.name))
@@ -173,10 +173,10 @@ def delete_file(fid = None):
                 flash('Фото удалено с сервера')                
             except:
                 flash('Не удалось выполнить физическое удаление фото с сервера. Файл не найден.')
-                redirect(url_for('files'))
+                return redirect(url_for('files'))
     else:
         flash('Фото для удаления не найдено')
-        redirect(url_for('files'))
+        return redirect(url_for('files'))
     return redirect(url_for('files'))
 
 
