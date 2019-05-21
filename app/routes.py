@@ -150,10 +150,34 @@ def upload_file():
         f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         photo = Photo(name=filename,photo_type=form.photo_type.data,active=form.active.data,caption=form.caption.data,descr=form.descr.data)
         db.session.add(photo)
-        db.session.commit()        
+        db.session.commit()
         flash('Фото успешно загружено!')
         return redirect(url_for('upload_file'))
     return render_template('upload_file.html', title=title,form=form,descr=descr)
+
+
+@app.route('/delete_file/<fid>')#физически удалить фото
+@login_required
+@required_roles('admin')
+def delete_file(fid = None):
+    photo = Photo.query.filter(Photo.id == fid).first()
+    if photo is not None:
+        if photo.active:
+            flash('Нельзя удалить фото, которое отображается на сайте. Сначала его нужно скрыть.')
+            redirect(url_for('files'))
+        else:
+            try:
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo.name))
+                db.session.delete(photo)
+                db.session.commit()
+                flash('Фото удалено с сервера')                
+            except:
+                flash('Не удалось выполнить физическое удаление фото с сервера. Файл не найден.')
+                redirect(url_for('files'))
+    else:
+        flash('Фото для удаления не найдено')
+        redirect(url_for('files'))
+    return redirect(url_for('files'))
 
 
 @app.route('/edit_file/<fid>',methods=['GET', 'POST'])#изменить фото

@@ -14,6 +14,7 @@
                 <th>Фото отображается на сайте?</th>            
                 <th>Изменить статус отображения на сайте</th>
                 <th>Изменить описание</th>
+                <th>Удалить файл</th>
             </tr>
             {% for f in files %}
             <tr>
@@ -52,6 +53,11 @@
                 </td>
                 <td>
                     <a href="{{ url_for('edit_file',fid=f.id) }}">Изменить описание</a>                    
+                </td>
+                <td>
+                    {% if not f.active %}
+                        <a href="{{ url_for('delete_file',fid=f.id) }}">Удалить файл</a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
