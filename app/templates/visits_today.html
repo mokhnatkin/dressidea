@@ -25,12 +25,12 @@
             </tr>
             {% for v in visits %}
             <tr>
-                <td><a href="{{ url_for('client_info',client_id=v.id) }}">{{ v.name }}</a></td>
+                <td>{{ v.name }}</td>
                 <td>{{ v.phone }}</td>
                 <td>{{ moment(v.begin).format('LLL') }}</td>
                 <td>
                     {% if not v.end %}
-                        {{ now_moment - v.begin }}
+                        {{ g.now_moment - v.begin }}
                     {% endif %}
                 </td>
                 <td>

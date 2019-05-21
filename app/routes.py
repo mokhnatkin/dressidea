@@ -34,6 +34,7 @@ def before_request():
         g.debug_flag = True #признак - находится ли приложение в отладке
     else:
         g.debug_flag = False
+    g.now_moment = datetime.utcnow()
     
 
 #A function defintion which will work as a decorator for each view – we can call this with @required_roles
@@ -606,9 +607,9 @@ def compute_amount(begin):#рассчитать стоимость визита
 @login_required
 def visits_today(param=None):
     if param is None:
-        param = 'today'    
+        param = 'today'
     title = 'Сейчас в коворкинге'
-    now_moment = datetime.utcnow()
+    #now_moment = datetime.utcnow()
     tomor_date = datetime.utcnow().date() + timedelta(days=1)
     yest_date = datetime.utcnow().date()
     visits = None
@@ -624,7 +625,7 @@ def visits_today(param=None):
                 .filter(Visit.begin > yest_date) \
                 .filter(Visit.begin < tomor_date) \
                 .order_by(Visit.begin).all()
-    return render_template('visits_today.html',title=title,visits=visits,now_moment=now_moment,compute_amount=compute_amount,descr=descr)
+    return render_template('visits_today.html',title=title,visits=visits,compute_amount=compute_amount,descr=descr)
 
 
 @app.route('/close_visit/<visit_id>')#завершить визит
@@ -644,7 +645,7 @@ def all_bookings(param=None):
     if param is None:
         param = 'future'
     title = 'Список броней'
-    now_moment = datetime.utcnow()
+    #now_moment = datetime.utcnow()
     tomor_date = datetime.utcnow().date() + timedelta(days=1)
     yest_date = datetime.utcnow().date()
     bookings = None
@@ -664,7 +665,7 @@ def all_bookings(param=None):
         descr = 'Брони на будущее'
         bookings = Booking.query.join(Client) \
                     .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
-                    .filter(Booking.begin >= now_moment) \
+                    .filter(Booking.begin >= g.now_moment) \
                     .order_by(Booking.begin).all()
     return render_template('all_bookings.html',title=title,bookings=bookings,descr=descr)
 
@@ -791,6 +792,6 @@ def stat():
             show_stat = True
         except:
             flash('Не могу выгрузить данные для расчета статистики')
-    return render_template('stat.html', title=title,form=form,descr=descr,show_stat=show_stat,\
+    return render_template('stat.html',title=title,form=form,descr=descr,show_stat=show_stat,\
                                         total_stat=total_stat,stat_per_day=stat_per_day,stat_per_day_len=stat_per_day_len)
 
