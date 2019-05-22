@@ -10,6 +10,7 @@
  </table>
 <h3>{{ descr }}</h3>
 <div>
+    <h4>Открытые визиты</h4>
     <div class="table-responsive">
         <table class="table table-hover">
             <tr>
@@ -18,46 +19,61 @@
                 <th>Начало</th>
                 <th>Как давно пришел</th>
                 <th>Текущая стоимость</th>
-                <th>Окончание</th>
-                <th>Окончательная стоимость</th>
-                <th>Комментарий</th>
                 <th>Завершить</th>
+                <th>Комментарий</th>
+                {% if current_user.role == 'admin' %}
+                    <th>Удалить</th>
+                {% endif %}
             </tr>
             {% for v in visits %}
-            <tr>
-                <td>{{ v.name }}</td>
-                <td>{{ v.phone }}</td>
-                <td>{{ moment(v.begin).format('LLL') }}</td>
-                <td>
-                    {% if not v.end %}
-                        {{ g.now_moment - v.begin }}
-                    {% endif %}
-                </td>
-                <td>
-                    {% if not v.end %}
-                        {{ compute_amount(v.begin) }}
-                    {% endif %}
-                </td>
-                <td>
-                    {% if v.end %}
-                        {{ moment(v.end).format('LLL') }}
-                    {% endif %}
-                </td>
-                <td>
-                    {% if v.end %}
-                        {{ v.amount }}
-                    {% endif %}
-                </td>
-                <td>{{ v.comment }}</td>
-                <td>
-                    {% if not v.end %}
-                        <a href="{{ url_for('close_visit',visit_id=v.id) }}">Завершить</a>
-                    {% endif %}
-                </td>
-            </tr>
+                {% if not v.end %}
+                    <tr>
+                        <td>{{ v.name }}</td>
+                        <td>{{ v.phone }}</td>
+                        <td>{{ moment(v.begin).format('LLL') }}</td>
+                        <td>{{ time_live(v.begin,g.now_moment) }}</td>
+                        <td>{{ "{:,.0f}".format(compute_amount(v.begin,g.now_moment)) }}</td>
+                        <td><a href="{{ url_for('close_visit',visit_id=v.id) }}">Завершить</a></td>                        
+                        <td>{{ v.comment }}</td>
+                        {% if current_user.role == 'admin' %}
+                            <td><a href="{{ url_for('delete_visit',visit_id=v.id) }}">Удалить</a></td>
+                        {% endif %}
+                    </tr>
+                {% endif %}
             {% endfor %}
         </table>
     </div>
+    <h4>Закрытые визиты</h4>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>Клиент</th>
+                <th>Телефон</th>
+                <th>Начало</th>
+                <th>Окончание</th>
+                <th>Окончательная стоимость</th>
+                <th>Комментарий</th>
+                {% if current_user.role == 'admin' %}
+                    <th>Удалить</th>
+                {% endif %}
+            </tr>
+            {% for v in visits %}
+                {% if v.end %}
+                    <tr>
+                        <td>{{ v.name }}</td>
+                        <td>{{ v.phone }}</td>
+                        <td>{{ moment(v.begin).format('LLL') }}</td>
+                        <td>{{ moment(v.end).format('LLL') }}</td>
+                        <td>{{ "{:,.0f}".format(v.amount) }}</td>
+                        <td>{{ v.comment }}</td>
+                        {% if current_user.role == 'admin' %}
+                            <td><a href="{{ url_for('delete_visit',visit_id=v.id) }}">Удалить</a></td>
+                        {% endif %}
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+    </div>    
 </div>
 
 {% endblock %}

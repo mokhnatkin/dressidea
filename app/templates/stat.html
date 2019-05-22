@@ -17,7 +17,7 @@
     <div class="row">
         <h3>Всего за выбранный период</h3>
         <p>Визитов: <b> {{ total_stat.count }}</b></p>
-        <p>Сумма: <b>{{ total_stat.sum }}</b></p>
+        <p>Сумма: <b>{{ "{:,.0f}".format(total_stat.sum) }}</b></p>
     </div>
     {% endif %}
     {% if stat_per_day_len and stat_per_day_len>0 %}
@@ -35,13 +35,13 @@
                     <tr>
                         <td>{{ moment(i.date).format('LL') }}</td>
                         <td>{{ i.count }}</td>
-                        <td>{{ i.sum }}</td>
+                        <td>{{ "{:,.0f}".format(i.sum) }}</td>
                     </tr>
                     {% endfor %}
                     <tr>
                         <td><b>ИТОГО</b></td>
                         <td><b>{{ total_stat.count }}</b></td>
-                        <td><b>{{ total_stat.sum }}</b></td>                        
+                        <td><b>{{ "{:,.0f}".format(total_stat.sum) }}</b></td>                        
                     </tr>
                 </table>
             </div>

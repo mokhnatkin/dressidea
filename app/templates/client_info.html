@@ -43,7 +43,7 @@
         {% if total_stat %}
             <div class="row">
                 <p>Визитов: <b> {{ total_stat.count }}</b></p>
-                <p>Сумма: <b>{{ total_stat.sum }}</b></p>
+                <p>Сумма: <b>{{ "{:,.0f}".format(total_stat.sum) }}</b></p>
             </div>
         {% endif %}        
         <div class="table-responsive">
@@ -58,7 +58,7 @@
                 <tr>
                     <td>{{ moment(v.begin).format('LLL') }}</td>
                     <td>{{ moment(v.end).format('LLL') }}</td>
-                    <td>{{ v.amount }}</td>
+                    <td>{{ "{:,.0f}".format(v.amount) }}</td>
                     <td>{{ v.comment }}</td>
                 </tr>
                 {% endfor %}

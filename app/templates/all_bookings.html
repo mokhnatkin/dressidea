@@ -23,6 +23,9 @@
                 <th>Поменять статус - не пришел</th>
                 <th>Комментарий</th>
                 <th>Изменить</th>
+                {% if current_user.role == 'admin' %}
+                    <th>Удалить</th>
+                {% endif %}
             </tr>
             {% if bookings %}
                 {% for b in bookings %}
@@ -56,6 +59,9 @@
                                 <a href="{{ url_for('edit_booking',booking_id=b.id) }}">Изменить</a>
                             {% endif %}                
                         </td>
+                        {% if current_user.role == 'admin' %}
+                            <td><a href="{{ url_for('delete_booking',booking_id=b.id) }}">Удалить</a></td>
+                        {% endif %}                        
                     </tr>
                 {% endfor %}
             {% endif %}

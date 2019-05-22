@@ -51,7 +51,7 @@ def required_roles(*roles):
  
 
 def get_current_user_role():#возвращает роль текущего пользователя
-    return current_user.role  
+    return current_user.role
     
 
 @app.route('/')
@@ -583,7 +583,7 @@ def add_visit_booking():
                     form=form,client_found=client_found,client_by_phone=client_by_phone)
 
 
-@app.route('/add_visit/<client_id>',methods=['GET', 'POST'])
+@app.route('/add_visit/<client_id>',methods=['GET', 'POST'])#добавляем визит
 @login_required
 def add_visit_for_client(client_id = None):
     title='Добавить визит'
@@ -591,14 +591,26 @@ def add_visit_for_client(client_id = None):
     descr = 'Добавление визита. Клиент: ' + client.name + ', телефон ' + str(client.phone)
     form = VisitForm()
     if form.validate_on_submit():
-        visit = Visit(client_id=client_id,comment=form.comment.data)
-        db.session.add(visit)
-        db.session.commit()
-        return redirect(url_for('visits_today',param='today'))
+        #проверим, чтобы не было открытых визитов у этого клиента
+        open_visits = Visit.query \
+            .filter(Visit.client_id == client_id) \
+            .filter(Visit.end.is_(None)).all()
+        if open_visits is not None and len(open_visits)>0:
+            has_open_visits = True
+        else:
+            has_open_visits = False
+        if not has_open_visits:
+            visit = Visit(client_id=client_id,comment=form.comment.data)
+            db.session.add(visit)
+            db.session.commit()
+            return redirect(url_for('visits_today',param='today'))
+        else:
+            flash('У клиента есть открытые визиты. Перед добавлением нового визита их необходимо закрыть.')
+            return redirect(url_for('visits_today',param='all'))
     return render_template('add_visit_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
-@app.route('/add_booking/<client_id>',methods=['GET', 'POST'])
+@app.route('/add_booking/<client_id>',methods=['GET', 'POST'])#добавляем бронь
 @login_required
 def add_booking_for_client(client_id = None):
     title='Добавить бронь.'
@@ -612,19 +624,29 @@ def add_booking_for_client(client_id = None):
         booking = Booking(client_id=client_id,begin=begin,end=end,comment=form.comment.data)
         db.session.add(booking)
         db.session.commit()
-        return redirect(url_for('all_bookings',param='future'))
+        return redirect(url_for('all_bookings',param='all'))
     return render_template('add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
-def compute_amount(begin):#рассчитать стоимость визита
+def compute_amount(begin,now):#рассчитать стоимость визита
     const_admin = Const_admin.query.first()
     rate = const_admin.rate
     max_amount = const_admin.max_amount
-    now_moment = datetime.utcnow()
-    duration = (now_moment - begin).seconds
+    delta = now - begin
+    days, seconds = delta.days, delta.seconds
+    duration = days*24*3600 + seconds
     amount = (duration * rate) / 3600
     amount = round(min(amount, max_amount))
     return amount
+
+
+def time_live(begin,now):#сколько времени клиент уже находится в заведении
+    delta = now - begin
+    days, seconds = delta.days, delta.seconds
+    hours = days * 24 + seconds // 3600
+    minutes = (seconds % 3600) // 60
+    res = str(hours)+' ч. '+str(minutes)+' м.'
+    return res
 
 
 @app.route('/visits_today/<param>')#визиты
@@ -649,17 +671,18 @@ def visits_today(param=None):
                 .filter(Visit.begin > yest_date) \
                 .filter(Visit.begin < tomor_date) \
                 .order_by(Visit.begin).all()
-    return render_template('visits_today.html',title=title,visits=visits,compute_amount=compute_amount,descr=descr)
+    return render_template('visits_today.html',title=title,visits=visits, \
+                            time_live=time_live,compute_amount=compute_amount,descr=descr)
 
 
 @app.route('/close_visit/<visit_id>')#завершить визит
 @login_required
 def close_visit(visit_id=None):
     visit = Visit.query.filter(Visit.id == visit_id).first()
-    amount = compute_amount(visit.begin)
+    amount = compute_amount(visit.begin,datetime.utcnow())
     visit.amount = amount
-    visit.end = datetime.utcnow()    
-    db.session.commit()    
+    visit.end = datetime.utcnow()
+    db.session.commit()
     return redirect(url_for('visits_today',param='today'))
 
 
@@ -677,7 +700,7 @@ def all_bookings(param=None):
         descr = 'Все брони'
         bookings = Booking.query.join(Client) \
                     .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
-                    .order_by(Booking.begin).all()
+                    .order_by(Booking.begin.desc()).all()
     elif param == 'today':#сегодняшние
         descr = 'Брони на сегодня'
         bookings = Booking.query.join(Client) \
@@ -700,7 +723,7 @@ def change_booking_status_positive(booking_id=None):
     booking = Booking.query.filter(Booking.id == booking_id).first()
     booking.attended = True
     db.session.commit()
-    return redirect(url_for('all_bookings'))
+    return redirect(url_for('all_bookings',param='all'))
 
 
 @app.route('/change_booking_status_negative/<booking_id>')#изменить статус брони - не пришел
@@ -709,7 +732,7 @@ def change_booking_status_negative(booking_id=None):
     booking = Booking.query.filter(Booking.id == booking_id).first()
     booking.attended = False
     db.session.commit()
-    return redirect(url_for('all_bookings'))
+    return redirect(url_for('all_bookings',param='all'))
 
 
 @app.route('/change_client_info/<client_id>',methods=['GET', 'POST'])#изменить данные клиента
@@ -819,3 +842,40 @@ def stat():
     return render_template('stat.html',title=title,form=form,descr=descr,show_stat=show_stat,\
                                         total_stat=total_stat,stat_per_day=stat_per_day,stat_per_day_len=stat_per_day_len)
 
+
+@app.route('/delete_visit/<visit_id>')#удалить визит
+@login_required
+@required_roles('admin')
+def delete_visit(visit_id = None):
+    visit = Visit.query.filter(Visit.id == visit_id).first()
+    if visit is not None:
+        try:
+            db.session.delete(visit)
+            db.session.commit()
+            flash('Визит удалён')                
+        except:
+            flash('Не удалось удалить визит.')
+            return redirect(url_for('visits_today',param='all'))
+    else:
+        flash('Визит для удаления не найден. Возможно, он уже был удалён ранее.')
+        return redirect(url_for('visits_today',param='all'))
+    return redirect(url_for('visits_today',param='all'))
+
+
+@app.route('/delete_booking/<booking_id>')#удалить бронь
+@login_required
+@required_roles('admin')
+def delete_booking(booking_id = None):
+    booking = Booking.query.filter(Booking.id == booking_id).first()
+    if booking is not None:
+        try:
+            db.session.delete(booking)
+            db.session.commit()
+            flash('Бронь удалёна')                
+        except:
+            flash('Не удалось удалить бронь.')
+            return redirect(url_for('all_bookings',param='all'))
+    else:
+        flash('Бронь для удаления не найдена. Возможно, она уже была удалена ранее.')
+        return redirect(url_for('all_bookings',param='all'))
+    return redirect(url_for('all_bookings',param='all'))
