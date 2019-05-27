@@ -87,14 +87,7 @@ class ClientSourceForm(FlaskForm):#добавить / изменить исто�
 
 
 class ClientForm(FlaskForm):#добавляем клиента
-    sources = ClientSource.query \
-                .with_entities(ClientSource.id,ClientSource.name) \
-                .filter(ClientSource.active==True).all()
-    sources_str = list()
-    sources_str.append(('not_set','--выберите--'))
-    for s in sources:
-        s_id = str(s[0])
-        sources_str.append((s_id,s[1]))
+    sources_str = list()#sources are passed from the view    
     name = StringField('Имя',validators=[DataRequired(), Length(min=1,max=50)])
     phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
     insta = StringField('Instagram; образец @dressidea_coworking',validators=[Length(max=50)])

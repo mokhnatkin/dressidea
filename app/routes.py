@@ -485,6 +485,13 @@ def add_client():
     title='Добавить клиента'
     descr = 'Здесь создается карточка клиента'
     form = ClientForm()
+    #query client sources to pass to the form
+    sources = ClientSource.query.filter(ClientSource.active==True).all()
+    sources_str = list()
+    sources_str.append(('not_set','--выберите--'))
+    for s in sources:
+        sources_str.append((s.id,s.name))
+    form.source.choices = sources_str
     if form.validate_on_submit():
         phone = form.phone.data
         try:
