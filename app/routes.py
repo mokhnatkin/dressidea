@@ -886,3 +886,12 @@ def delete_booking(booking_id = None):
         flash('Бронь для удаления не найдена. Возможно, она уже была удалена ранее.')
         return redirect(url_for('all_bookings',param='all'))
     return redirect(url_for('all_bookings',param='all'))
+
+
+@app.route('/about')#о проекте
+def about():#главная страница
+    title = 'Швейный коворкинг, город Алматы - о проекте'
+    meta_description = 'Место для любителей шитья, город Алматы. О проекте, история'
+    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, о проекте'    
+    return render_template('about.html',title=title, meta_description = meta_description, \
+                            meta_keywords=meta_keywords)
