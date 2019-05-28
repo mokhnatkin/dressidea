@@ -485,31 +485,29 @@ def add_client():
     title='Добавить клиента'
     descr = 'Здесь создается карточка клиента'
     form = ClientForm()
-    #query client sources to pass to the form
-    sources = ClientSource.query.filter(ClientSource.active==True).all()
-    sources_str = list()
-    sources_str.append(('not_set','--выберите--'))
-    for s in sources:
-        sources_str.append((s.id,s.name))
-    form.source.choices = sources_str
     if form.validate_on_submit():
         phone = form.phone.data
         try:
             phone_already_in_DB = Client.query.filter(Client.phone == phone).first()
         except:
             pass
-        source_id=form.source.data
-        name=form.name.data
+        name = form.name.data
         if phone_already_in_DB is None:
-            if source_id == 'not_set':
+            if form.source.data == 'not_set':
                 client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)
             else:
-                client = Client(name=name,phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)
-            db.session.add(client)
+                try:
+                    source_id = int(form.source.data)
+                    client = Client(name=name,phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)
+                    db.session.add(client)
+                except:
+                    client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)
+                    db.session.add(client)
+                    flash('Не получилось получить id канала. Клиент будет создан без указания канала.')            
             db.session.commit()
             flash('Клиент добавлен. Теперь можно добавить визит или бронь.')
         else:
-            flash('Ошибка - клиент с таким телефоном уже есть в базе')
+            flash('Ошибка - клиент с таким телефоном уже есть в базе.')
         return redirect(url_for('add_client'))
     return render_template('add_client.html',title=title,descr=descr,form=form)
 

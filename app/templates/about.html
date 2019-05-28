@@ -3,6 +3,11 @@
 {% block app_content %}
 <div class="container">
     <div class="row">
+        <div class="col-md-6 col-sm-12 col-xs-12">            
+            <div class="container" style="max-width:{{g.const_public.ya_map_width}}px">
+                <img style="max-width:100%" src="{{ url_for('get_path_to_static',fname='about_me.jpeg') }}" alt="Швейный коворкинг Алматы"><!-- Фото Далиды с ножницами -->
+            </div>
+        </div>
         <div class="col-md-6 col-sm-12 col-xs-12"> <!-- Обо мне -->
             <h1 style="font-size: 200%; COLOR: #542947;">Немного обо мне</h1>
             <p style="font-size: 120%;">
@@ -43,19 +48,15 @@
                 не отвлекаясь на домашний быт.
             </p>
         </div>
-        <div class="col-md-6 col-sm-12 col-xs-12">
-            <p></p><p></p><p></p>
-            <div class="container" style="max-width:{{g.const_public.ya_map_width}}px">
-                <img style="max-width:100%" src="{{ url_for('get_path_to_static',fname='about_me.jpeg') }}" alt="Швейный коворкинг Алматы"><!-- Фото Далиды с ножницами -->
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <p></p><p></p>
     </div>
 
     <div class="row"> <!-- Кому интересно -->
+        <div class="col-md-6 col-sm-12 col-xs-12"><!-- Фото -->
+            <p></p><p></p><p></p>
+            <div class="container" style="max-width:{{g.const_public.ya_map_width}}px">
+                <img style="max-width:100%" src="{{ url_for('get_path_to_static',fname='for_whom.jpeg') }}" alt="Швейный коворкинг Алматы"><!-- Фото -->
+            </div>
+        </div>        
         <div class="col-md-6 col-sm-12 col-xs-12">
             <h1 style="font-size: 200%; COLOR: #542947;">Почему я открыла швейный коворкинг DressIdea?</h1>
             <p style="font-size: 120%;">
@@ -71,12 +72,6 @@
                 Я хочу, чтобы DressIdea стала источником возникновения этих чувств у всех, 
                 кто сюда приходит!
         </div>
-        <div class="col-md-6 col-sm-12 col-xs-12"><!-- Фото -->
-            <p></p><p></p><p></p>
-            <div class="container" style="max-width:{{g.const_public.ya_map_width}}px">
-                <img style="max-width:100%" src="{{ url_for('get_path_to_static',fname='for_whom.jpeg') }}" alt="Швейный коворкинг Алматы"><!-- Фото -->
-            </div>
-        </div>        
     </div>
 </div>    
 {% endblock %}

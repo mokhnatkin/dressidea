@@ -87,13 +87,21 @@ class ClientSourceForm(FlaskForm):#добавить / изменить исто�
 
 
 class ClientForm(FlaskForm):#добавляем клиента
-    sources_str = list()#sources are passed from the view    
+    sources_str = list()#sources are passed from the view
+    sources_str.append(('not_set','--выберите--'))
     name = StringField('Имя',validators=[DataRequired(), Length(min=1,max=50)])
     phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
-    insta = StringField('Instagram; образец @dressidea_coworking',validators=[Length(max=50)])
+    insta = StringField('Instagram; образец dressidea_coworking',validators=[Length(max=50)])
     source = SelectField('Откуда пришел клиент?',choices = sources_str)
     comment = TextAreaField('Комментарий',validators=[Length(max=200)])
     submit = SubmitField('Добавить')
+
+    def __init__(self, *args, **kwargs):
+        super(ClientForm, self).__init__(*args, **kwargs)
+        s_1 = [('not_set','--выберите--')]
+        sources_db = [(str(a.id), a.name) for a in ClientSource.query.filter(ClientSource.active==True)]
+        sources = s_1 + sources_db
+        self.source.choices = sources
 
 
 class ClientChangeForm(FlaskForm):#изменяем данные клиента
