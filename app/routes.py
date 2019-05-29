@@ -667,12 +667,12 @@ def visits_today(param=None):
     if param == 'all':#все визиты
         descr = 'Все визиты'
         visits = Visit.query.join(Client) \
-                .with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
                 .order_by(Visit.begin).all()
     elif param == 'today':#сегодняшние
         descr = 'Сегодняшние визиты'
         visits = Visit.query.join(Client) \
-                .with_entities(Client.name,Client.phone,Visit.id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
                 .filter(Visit.begin > yest_date) \
                 .filter(Visit.begin < tomor_date) \
                 .order_by(Visit.begin).all()
@@ -704,19 +704,19 @@ def all_bookings(param=None):
     if param == 'all':#все брони
         descr = 'Все брони'
         bookings = Booking.query.join(Client) \
-                    .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
+                    .with_entities(Client.name,Client.phone,Booking.id,Booking.client_id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
                     .order_by(Booking.begin.desc()).all()
     elif param == 'today':#сегодняшние
         descr = 'Брони на сегодня'
         bookings = Booking.query.join(Client) \
-                    .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
+                    .with_entities(Client.name,Client.phone,Booking.id,Booking.client_id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
                     .filter(Booking.begin > yest_date) \
                     .filter(Booking.begin < tomor_date) \
                     .order_by(Booking.begin).all()
     elif param == 'future':#будущие
         descr = 'Брони на будущее'
         bookings = Booking.query.join(Client) \
-                    .with_entities(Client.name,Client.phone,Booking.id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
+                    .with_entities(Client.name,Client.phone,Booking.id,Booking.client_id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
                     .filter(Booking.begin >= g.now_moment) \
                     .order_by(Booking.begin).all()
     return render_template('all_bookings.html',title=title,bookings=bookings,descr=descr)

@@ -28,7 +28,7 @@
             {% for v in visits %}
                 {% if not v.end %}
                     <tr>
-                        <td>{{ v.name }}</td>
+                        <td><a href="{{ url_for('client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ time_live(v.begin,g.now_moment) }}</td>
@@ -60,7 +60,7 @@
             {% for v in visits %}
                 {% if v.end %}
                     <tr>
-                        <td>{{ v.name }}</td>
+                        <td><a href="{{ url_for('client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ moment(v.end).format('LLL') }}</td>

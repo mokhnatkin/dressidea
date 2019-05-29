@@ -30,10 +30,10 @@
             {% if bookings %}
                 {% for b in bookings %}
                     <tr>
-                        <td>{{ b.name }}</td>
+                        <td><a href="{{ url_for('client_info',client_id=b.client_id) }}">{{ b.name }}</a></td>
                         <td>{{ b.phone }}</td>
-                        <td>{{ moment(b.begin).format('LLL') }}</td>
-                        <td>{{ moment(b.end).format('LLL') }}</td>
+                        <td>{{ moment(b.begin).format('LLLL') }}</td>
+                        <td>{{ moment(b.end).format('LLLL') }}</td>
                         <td>
                             {% if b.attended == None %}
                                 Статус не указан
