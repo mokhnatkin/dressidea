@@ -31,8 +31,8 @@
                         <td><a href="{{ url_for('client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
-                        <td>{{ time_live(v.begin,g.now_moment) }}</td>
-                        <td>{{ "{:,.0f}".format(compute_amount(v.begin,g.now_moment)) }}</td>
+                        <td>{{ time_live(v.begin) }}</td>
+                        <td>{{ "{:,.0f}".format(compute_amount(v.begin)) }}</td>
                         <td><a href="{{ url_for('close_visit',visit_id=v.id) }}">Завершить</a></td>                        
                         <td>{{ v.comment }}</td>
                         {% if current_user.role == 'admin' %}

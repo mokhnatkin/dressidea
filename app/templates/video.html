@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1 style="font-size: 200%; COLOR: #542947;">Видео мастер-классов</h1>
+    <div class="container">
+        {% for cat in categories %}            
+            <h2 style="font-size: 170%; COLOR: #542947;">{{ cat.name }} </h2>
+            {% for v in videos %}
+                <div class="row">
+                    <div class="col-md-4 col-sm-12 col-xs-12">
+                        {% if v.id == cat.id %}
+                            <h3 style="font-size: 150%;">{{ v.descr }}</h3>
+                            <p>{{ v.comment }}</p>
+                            <p>Добавлено: {{ moment(v.timestamp).format('LLL') }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8 col-sm-12 col-xs-12">
+                        {% if v.id == cat.id %}
+                        <div class="container">
+                            <iframe style="max-width:100%;" width="{{g.const_public.ya_map_width}}" height="{{g.const_public.ya_map_height}}" src="https://www.youtube.com/embed/{{ v.url }}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+                            </iframe>
+                        </div>
+                        {% endif %}                        
+                    </div>                
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endblock %}
+
+

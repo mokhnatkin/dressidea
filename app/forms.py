@@ -1,9 +1,10 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, DecimalField, IntegerField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
+                TextAreaField, SelectField, DecimalField, IntegerField
 from wtforms import DateTimeField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from app.models import User, ClientSource
+from app.models import User, ClientSource, VideoCategory
 from wtforms.fields.html5 import DateField
 from wtforms.fields.html5 import TimeField
 
@@ -83,6 +84,27 @@ class ItemInsideForm(FlaskForm):#добавить предметы внутри 
 class ClientSourceForm(FlaskForm):#добавить / изменить источники    
     name = StringField('Название',validators=[DataRequired(), Length(min=1,max=100)])
     active = BooleanField(label='Активен')
+    submit = SubmitField('Добавить / изменить')
+
+
+class VideoForm(FlaskForm):#добавить видео мастер класса
+    category = SelectField('Выберите категорию',choices = [],validators=[DataRequired()])
+    url = StringField('Последняя часть ссылки на видео; например, если ссылка https://www.youtube.com/watch?v=Yai9fmGJTaQ, то в этом поле нужно указать Yai9fmGJTaQ',validators=[DataRequired(), Length(min=1,max=500)])
+    descr = StringField('Название видео',validators=[DataRequired(), Length(min=1,max=500)])
+    comment = TextAreaField('Описание видео',validators=[DataRequired(), Length(min=1,max=1000)])
+    active = BooleanField(label='Отображать на сайте')
+    submit = SubmitField('Добавить / изменить видео')
+
+    def __init__(self, *args, **kwargs):
+        super(VideoForm, self).__init__(*args, **kwargs)        
+        categories = [(str(a.id), a.name) for a in VideoCategory.query.filter(VideoCategory.active==True)]        
+        self.category.choices = categories
+
+
+class VideoCategoryForm(FlaskForm):#добавить / изменить категории видео
+    num = IntegerField(label='Номер (порядок отображения на сайте)',validators=[DataRequired()])
+    name = StringField('Название категории',validators=[DataRequired(), Length(min=1,max=200)])
+    active = BooleanField(label='Отображать на сайте')
     submit = SubmitField('Добавить / изменить')
 
 

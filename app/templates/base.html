@@ -44,6 +44,7 @@
                     <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts" style="COLOR: #542947">Контакты</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('gallery') }}" style="COLOR: #542947">Фото</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('about') }}" style="COLOR: #542947">О проекте</a></li>
+                    <!--<li><a class="navbar-brand" href="{{ url_for('video') }}" style="COLOR: #542947">Мастер-классы</a></li>-->
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li><a class="navbar-brand" href="{{ g.const_public.insta_url }}" style="COLOR: #542947"><i class="fab fa-instagram"></i></a></li>
@@ -71,6 +72,8 @@
                     <li><a class="navbar-brand" href="{{ url_for('all_bookings',param='today') }}">Брони</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('stat') }}">Статистика</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('add_video') }}">+ видео</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('video_list') }}">Все видео</a></li>
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -104,6 +107,7 @@
                                     <li><a href="{{ url_for('const_admin') }}">Константы админки</a></li>
                                     <li><a href="{{ url_for('item_inside') }}">Список оборудования</a></li>
                                     <li><a href="{{ url_for('sources') }}">Источники клиентов</a></li>
+                                    <li><a href="{{ url_for('video_category') }}">Категории видео</a></li>                                    
                                 </ul>
                             </div>
                         </div>                        
@@ -139,6 +143,7 @@
                     <a href="{{ url_for('index') }}#contacts">Контакты</a>
                     <a href="{{ url_for('gallery') }}">Фото</a>
                     <a href="{{ url_for('about') }}">О проекте</a>
+                    <!--<a href="{{ url_for('video') }}">Мастер-классы</a>-->
                 </footer>
             </div>
         {% endif %}

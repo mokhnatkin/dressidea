@@ -105,6 +105,24 @@ class ClientSource(db.Model):#источники - откуда приходят
     clients = db.relationship('Client',backref='clientsource',lazy='dynamic')
 
 
+class VideoCategory(db.Model):#категории видео
+    id = db.Column(db.Integer,primary_key=True)
+    num = db.Column(db.Integer,unique=True, nullable=False)#номер для отображения
+    name = db.Column(db.String(200),unique=True, nullable=False)
+    active = db.Column(db.Boolean)
+    videos = db.relationship('Video',backref='v_category',lazy='dynamic')
+
+
+class Video(db.Model):#ссылки на мастер классы
+    id = db.Column(db.Integer,primary_key=True)
+    timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+    descr = db.Column(db.String(500),nullable=False)
+    comment = db.Column(db.String(1000),nullable=False)
+    url = db.Column(db.String(500),nullable=False)
+    active = db.Column(db.Boolean)
+    category_id = db.Column(db.Integer,db.ForeignKey('video_category.id'))
+
+
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))

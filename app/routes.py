@@ -3,9 +3,9 @@ from flask import render_template, flash, redirect, url_for, request, g, send_fi
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
                         ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
-                        PeriodInputForm
+                        PeriodInputForm, VideoCategoryForm, VideoForm
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
-                        Client, Visit, Booking
+                        Client, Visit, Booking, Video, VideoCategory
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
@@ -633,19 +633,27 @@ def add_booking_for_client(client_id = None):
     return render_template('add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
-def compute_amount(begin,now):#рассчитать стоимость визита
+def compute_amount(begin):#рассчитать стоимость визита
     const_admin = Const_admin.query.first()
     rate = const_admin.rate
+    half_rate = rate * 0.5#тариф за полчаса
     max_amount = const_admin.max_amount
+    now = datetime.utcnow()
     delta = now - begin
     days, seconds = delta.days, delta.seconds
     duration = days*24*3600 + seconds
-    amount = (duration * rate) / 3600
-    amount = round(min(amount, max_amount))
+    minutes = duration / 60
+    if minutes < 10:#первые 10 минут бесплатно
+        amount = 0.0
+    else:
+        amount = (minutes // 30 + 1) * half_rate#тарификация получасовая
+    #amount = (duration * rate) / 3600
+    amount = min(amount, max_amount)
     return amount
 
 
-def time_live(begin,now):#сколько времени клиент уже находится в заведении
+def time_live(begin):#сколько времени клиент уже находится в заведении
+    now = datetime.utcnow()
     delta = now - begin
     days, seconds = delta.days, delta.seconds
     hours = days * 24 + seconds // 3600
@@ -684,7 +692,7 @@ def visits_today(param=None):
 @login_required
 def close_visit(visit_id=None):
     visit = Visit.query.filter(Visit.id == visit_id).first()
-    amount = compute_amount(visit.begin,datetime.utcnow())
+    amount = compute_amount(visit.begin)
     visit.amount = amount
     visit.end = datetime.utcnow()
     db.session.commit()
@@ -888,8 +896,158 @@ def delete_booking(booking_id = None):
 
 @app.route('/about')#о проекте
 def about():#главная страница
-    title = 'Швейный коворкинг, город Алматы - о проекте'
+    title = 'Швейный коворкинг, город Алматы, о проекте'
     meta_description = 'Место для любителей шитья, город Алматы. О проекте, история'
     meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, о проекте'    
     return render_template('about.html',title=title, meta_description = meta_description, \
                             meta_keywords=meta_keywords)
+
+
+@app.route('/video_category',methods=['GET','POST'])#список категорий видео
+@login_required
+@required_roles('admin')
+def video_category():
+    title='Категории видео'
+    descr = 'Здесь изменяется список оборудования в коворкинге'
+    form = VideoCategoryForm()
+    items = VideoCategory.query.all()
+    if form.validate_on_submit():
+        num = form.num.data
+        try:
+            item_num_already_in_DB = VideoCategory.query.filter(VideoCategory.num == num).first()            
+        except:
+            pass
+        name = form.name.data
+        try:
+            item_name_already_in_DB = VideoCategory.query.filter(VideoCategory.name == name).first()            
+        except:
+            pass            
+        if item_num_already_in_DB is None and item_name_already_in_DB is None:
+            item = VideoCategory(num=num,name=name,active=form.active.data)        
+            db.session.add(item)
+            db.session.commit()
+            flash('Добавлено!')
+        else:
+            flash('Ошибка - категория с таким порядковым номером или названием уже есть в базе. Выберите другой номер / название!')
+        return redirect(url_for('video_category'))
+    return render_template('video_category.html',title=title,descr=descr,form=form,items=items)
+
+
+@app.route('/edit_video_category/<item_id>',methods=['GET', 'POST'])#предменты в коворкинге (списком на главной)
+@login_required
+@required_roles('admin')
+def edit_video_category(item_id = None):
+    title='Категории видео'
+    form = VideoCategoryForm()
+    descr = 'Здесь изменяется список категорий видео мастер-классов'
+    item = VideoCategory.query.filter(VideoCategory.id == item_id).first()
+    if request.method == 'GET':
+        form = VideoCategoryForm(obj=item)
+    if form.validate_on_submit():
+        item.num = form.num.data
+        item.name = form.name.data
+        item.active = form.active.data
+        db.session.commit()
+        flash('Значения изменены!')
+        return redirect(url_for('video_category'))
+    return render_template('video_category.html', title=title,form=form,descr=descr)
+
+
+@app.route('/add_video',methods=['GET','POST'])#добавить видео
+@login_required
+def add_video():
+    title='Добавить видео мастер-класса'
+    descr = 'Здесь можно добавить новое видео'
+    form = VideoForm()
+    if form.validate_on_submit():
+        url = form.url.data
+        try:
+            url_already_in_DB = Video.query.filter(Video.url == url).first()
+        except:
+            pass
+        v_descr = form.descr.data
+        comment = form.comment.data
+        active = form.active.data
+        category = int(form.category.data)
+        if url_already_in_DB is None:
+            video = Video(url=url,descr=v_descr,comment=comment,active=active,category_id=category)
+            db.session.add(video)
+            db.session.commit()
+            flash('Видео добавлено.')
+        else:
+            flash('Ошибка - видео с такой ссылкой уже есть в базе.')
+        return redirect(url_for('add_video'))
+    return render_template('add_video.html',title=title,descr=descr,form=form)
+
+
+@app.route('/edit_video/<video_id>',methods=['GET', 'POST'])#изменить данные клиента
+@login_required
+def edit_video(video_id=None):
+    title = 'Изменить видео'
+    descr = 'Здесь можно изменить видео'    
+    form = VideoForm()
+    video = Video.query.filter(Video.id == video_id).first()
+    if request.method == 'GET':
+        form = VideoForm(obj=video)
+    if form.validate_on_submit():
+        video.url = form.url.data
+        video.descr = form.descr.data
+        video.comment = form.comment.data
+        video.active = form.active.data
+        video.category_id = form.category.data        
+        db.session.commit()
+        flash('Данные видео изменены!')
+        return redirect(url_for('video_list'))
+    return render_template('add_video.html',title=title,form=form,descr=descr)
+
+
+def show_video_cat_name(cat_id):#возвращает имя канала исходя из id
+    s = VideoCategory.query.filter(VideoCategory.id == cat_id).first()
+    name = s.name
+    return name
+
+@app.route('/video_list')#все видео мастер классов
+@login_required
+def video_list():
+    title = 'Список видео'
+    descr = 'Список всех видео мастер-классов'
+    videos = Video.query.order_by(Video.timestamp.desc()).all()
+    return render_template('video_list.html',title=title,descr=descr,videos=videos, \
+                show_video_cat_name=show_video_cat_name)
+
+
+@app.route('/video_per_category/<cat_id>')#все видео мастер классов в данной категории
+@login_required
+def video_per_category(cat_id = None):
+    videos = None    
+    try:
+        videos = Video.query \
+            .filter(Video.category_id == cat_id) \
+            .order_by(Video.timestamp.desc()).all()
+    except:
+        flash('Не могу получить список видео данной категории')
+        pass
+    title = 'Список видео категории ' + show_video_cat_name(cat_id)
+    descr = 'Список всех видео мастер-классов в категории ' + show_video_cat_name(cat_id)
+    return render_template('video_list.html',title=title,descr=descr,videos=videos, \
+                show_video_cat_name=show_video_cat_name)
+
+
+@app.route('/video')#видео мастер-классов
+def video():#главная страница
+    title = 'Швейный коворкинг, город Алматы, мастер-классы'
+    meta_description = 'Место для любителей шитья, город Алматы. Мастер классы'
+    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, мастер классы'
+    #все активные категории, где есть видео
+    categories = VideoCategory.query.join(Video) \
+                .filter(VideoCategory.active == True) \
+                .order_by(VideoCategory.num).all()
+    videos = VideoCategory.query.join(Video) \
+                    .with_entities(VideoCategory.id,Video.descr,Video.comment,Video.url,Video.timestamp) \
+                    .filter(VideoCategory.active == True) \
+                    .filter(Video.active == True) \
+                    .order_by(VideoCategory.num) \
+                    .order_by(Video.timestamp.desc()).all()
+    return render_template('video.html',title=title, meta_description = meta_description, \
+                            meta_keywords=meta_keywords, videos=videos, categories=categories)
+                            
