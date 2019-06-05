@@ -52,6 +52,9 @@
                 <th>Начало</th>
                 <th>Окончание</th>
                 <th>Окончательная стоимость</th>
+                {% if param == 'today' %}
+                    <th>Вернуть в открытые</th>
+                {% endif %}
                 <th>Комментарий</th>
                 {% if current_user.role == 'admin' %}
                     <th>Удалить</th>
@@ -65,6 +68,9 @@
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ moment(v.end).format('LLL') }}</td>
                         <td>{{ "{:,.0f}".format(v.amount) }}</td>
+                        {% if param == 'today' %}
+                            <td><a href="{{ url_for('open_closed_visit',visit_id=v.id) }}">Открыть</a></td>
+                        {% endif %}
                         <td>{{ v.comment }}</td>
                         {% if current_user.role == 'admin' %}
                             <td><a href="{{ url_for('delete_visit',visit_id=v.id) }}">Удалить</a></td>

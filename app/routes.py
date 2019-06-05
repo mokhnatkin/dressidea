@@ -635,20 +635,15 @@ def add_booking_for_client(client_id = None):
 
 def compute_amount(begin):#рассчитать стоимость визита
     const_admin = Const_admin.query.first()
-    rate = const_admin.rate
-    half_rate = rate * 0.5#тариф за полчаса
+    rate = const_admin.rate    
     max_amount = const_admin.max_amount
     now = datetime.utcnow()
     delta = now - begin
     days, seconds = delta.days, delta.seconds
     duration = days*24*3600 + seconds
-    minutes = duration / 60
-    if minutes < 10:#первые 10 минут бесплатно
-        amount = 0.0
-    else:
-        amount = (minutes // 30 + 1) * half_rate#тарификация получасовая
-    #amount = (duration * rate) / 3600
-    amount = min(amount, max_amount)
+    amount_real = rate / 3600 * duration
+    amount = (amount_real // 100) * 100#округляем до 100 тг в меньшую сторону
+    amount = min(amount, max_amount)#применяем максимальный чек
     return amount
 
 
@@ -685,7 +680,7 @@ def visits_today(param=None):
                 .filter(Visit.begin < tomor_date) \
                 .order_by(Visit.begin).all()
     return render_template('visits_today.html',title=title,visits=visits, \
-                            time_live=time_live,compute_amount=compute_amount,descr=descr)
+                            time_live=time_live,compute_amount=compute_amount,descr=descr,param=param)
 
 
 @app.route('/close_visit/<visit_id>')#завершить визит
@@ -697,6 +692,16 @@ def close_visit(visit_id=None):
     visit.end = datetime.utcnow()
     db.session.commit()
     return redirect(url_for('visits_today',param='today'))
+
+
+@app.route('/open_closed_visit/<visit_id>')#открыть завершенный по ошибке визит
+@login_required
+def open_closed_visit(visit_id=None):
+    visit = Visit.query.filter(Visit.id == visit_id).first()    
+    visit.amount = None
+    visit.end = None
+    db.session.commit()
+    return redirect(url_for('visits_today',param='today'))    
 
 
 @app.route('/all_bookings/<param>')#брони
