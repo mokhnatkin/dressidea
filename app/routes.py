@@ -3,9 +3,10 @@ from flask import render_template, flash, redirect, url_for, request, g, send_fi
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
                         ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
-                        PeriodInputForm, VideoCategoryForm, VideoForm
+                        PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
+                        ConfirmGroupVisitAmountForm
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
-                        Client, Visit, Booking, Video, VideoCategory
+                        Client, Visit, Booking, Video, VideoCategory, Promo
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
@@ -605,7 +606,10 @@ def add_visit_for_client(client_id = None):
         else:
             has_open_visits = False
         if not has_open_visits:
-            visit = Visit(client_id=client_id,comment=form.comment.data)
+            if form.promo_id.data == 'not_set':#промоакция не указана
+                visit = Visit(client_id=client_id,comment=form.comment.data)
+            else:
+                visit = Visit(client_id=client_id,promo_id=form.promo_id.data,comment=form.comment.data)
             db.session.add(visit)
             db.session.commit()
             return redirect(url_for('visits_today',param='today'))
@@ -633,7 +637,7 @@ def add_booking_for_client(client_id = None):
     return render_template('add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
-def compute_amount(begin):#рассчитать стоимость визита
+def compute_amount_no_promo(begin):#рассчитать стоимость визита без акций
     const_admin = Const_admin.query.first()
     rate = const_admin.rate    
     max_amount = const_admin.max_amount
@@ -642,8 +646,21 @@ def compute_amount(begin):#рассчитать стоимость визита
     days, seconds = delta.days, delta.seconds
     duration = days*24*3600 + seconds
     amount_real = rate / 3600 * duration
-    amount = (amount_real // 100) * 100#округляем до 100 тг в меньшую сторону
+    amount = (amount_real // 100) * 100#округляем до 100 тг в меньшую сторону    
     amount = min(amount, max_amount)#применяем максимальный чек
+    return amount
+
+
+def compute_amount(begin,promo_id):#рассчитать стоимость визита    
+    if promo_id:#выбрана акция
+        promo = Promo.query.filter(Promo.id == promo_id).first()
+        if get_promo_type_name(promo.promo_type) in ('fix_value','group_visit'):#фиксированная цена или групповой визит
+            amount = promo.value
+        elif get_promo_type_name(promo.promo_type) == 'discount':#скидка
+            coef = (1-promo.value / 100)
+            amount = compute_amount_no_promo(begin) * coef
+    else:
+        amount = compute_amount_no_promo(begin)
     return amount
 
 
@@ -657,41 +674,69 @@ def time_live(begin):#сколько времени клиент уже нахо
     return res
 
 
+def get_promo_name(promo_id):
+    promos = Promo.query.with_entities(Promo.id,Promo.name).all()
+    for p in promos:
+        if p.id == promo_id:
+            res = p.name
+    return res
+
+
 @app.route('/visits_today/<param>')#визиты
 @login_required
 def visits_today(param=None):
     if param is None:
         param = 'today'
-    title = 'Сейчас в коворкинге'
-    #now_moment = datetime.utcnow()
+    title = 'Сейчас в коворкинге'    
     tomor_date = datetime.utcnow().date() + timedelta(days=1)
     yest_date = datetime.utcnow().date()
     visits = None
     if param == 'all':#все визиты
         descr = 'Все визиты'
         visits = Visit.query.join(Client) \
-                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount,Visit.promo_id) \
                 .order_by(Visit.begin.desc()).all()
     elif param == 'today':#сегодняшние
         descr = 'Сегодняшние визиты'
         visits = Visit.query.join(Client) \
-                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount,Visit.promo_id) \
                 .filter(Visit.begin > yest_date) \
                 .filter(Visit.begin < tomor_date) \
                 .order_by(Visit.begin.desc()).all()
     return render_template('visits_today.html',title=title,visits=visits, \
-                            time_live=time_live,compute_amount=compute_amount,descr=descr,param=param)
+                            time_live=time_live,compute_amount=compute_amount, \
+                            get_promo_name=get_promo_name, descr=descr,param=param)
 
 
 @app.route('/close_visit/<visit_id>')#завершить визит
 @login_required
 def close_visit(visit_id=None):
     visit = Visit.query.filter(Visit.id == visit_id).first()
-    amount = compute_amount(visit.begin)
+    if visit.promo_id:
+        promo = Promo.query.filter(Promo.id == visit.promo_id).first()
+        if get_promo_type_name(promo.promo_type) == 'group_visit':#подтвердить стоимость группового визита
+            return redirect(url_for('confirm_and_close_group_visit',visit_id=visit_id,amount=promo.value))
+    amount = compute_amount(visit.begin,visit.promo_id)
     visit.amount = amount
     visit.end = datetime.utcnow()
     db.session.commit()
     return redirect(url_for('visits_today',param='today'))
+
+
+@app.route('/confirm_and_close_group_visit/<visit_id>/<amount>',methods=['GET', 'POST'])#подтверждаем и закрываем групповой визит
+@login_required
+def confirm_and_close_group_visit(visit_id,amount):
+    title='Подтвердить и закрыть групповой визит'
+    form = ConfirmGroupVisitAmountForm()    
+    visit = Visit.query.filter(Visit.id == visit_id).first()
+    if request.method == 'GET':
+        form.amount.data = float(amount)
+    if form.validate_on_submit():
+        visit.amount = form.amount.data
+        visit.end = datetime.utcnow()
+        db.session.commit()
+        return redirect(url_for('visits_today',param='today'))
+    return render_template('confirm_and_close_group_visit.html', title=title, form=form)
 
 
 @app.route('/open_closed_visit/<visit_id>')#открыть завершенный по ошибке визит
@@ -1055,4 +1100,43 @@ def video():#главная страница
                     .order_by(Video.timestamp.desc()).all()
     return render_template('video.html',title=title, meta_description = meta_description, \
                             meta_keywords=meta_keywords, videos=videos, categories=categories)
-                            
+
+promo_types = {'not_set':0,'fix_value':1,'discount':2,'group_visit':3}#типы и id промо акций
+
+def get_promo_type_id(promo_name):#получаем id типа акции исходя из выбранного в форме
+    res = promo_types[promo_name]
+    return res
+
+
+def get_promo_type_name(promo_id):#получаем имя типа акции исходя из выбранного в форме
+    res = None   
+    for key,val in promo_types.items():
+        if val==promo_id:
+            res = key    
+    return res    
+
+
+@app.route('/add_promo',methods=['GET','POST'])#добавить промоакцию
+@login_required
+@required_roles('admin')
+def add_promo():
+    title='Добавить акцию'
+    descr = 'Здесь можно добавить акцию'
+    form = PromoForm()
+    if form.validate_on_submit():
+        promo_type = get_promo_type_id(form.promo_type.data)
+        promo = Promo(name=form.name.data,promo_type=promo_type,value=form.value.data,active=form.active.data)
+        db.session.add(promo)
+        db.session.commit()
+        flash('Акция добавлена.')
+        return redirect(url_for('add_promo'))
+    return render_template('add_promo.html',title=title,descr=descr,form=form)
+
+
+@app.route('/promo_list')#список акций
+@login_required
+def promo_list():
+    title = 'Список акций'
+    promos = Promo.query.all()
+    return render_template('promo_list.html',title=title, \
+                    promos=promos,get_promo_type_name=get_promo_type_name)

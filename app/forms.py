@@ -4,7 +4,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
 from wtforms import DateTimeField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from app.models import User, ClientSource, VideoCategory
+from app.models import User, ClientSource, VideoCategory, Promo
 from wtforms.fields.html5 import DateField
 from wtforms.fields.html5 import TimeField
 
@@ -109,36 +109,35 @@ class VideoCategoryForm(FlaskForm):#добавить / изменить кате
 
 
 class ClientForm(FlaskForm):#добавляем клиента
-    sources_str = list()#sources are passed from the view
-    sources_str.append(('not_set','--выберите--'))
     name = StringField('Имя',validators=[DataRequired(), Length(min=1,max=50)])
     phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
     insta = StringField('Instagram; образец dressidea_coworking',validators=[Length(max=50)])
-    source = SelectField('Откуда пришел клиент?',choices = sources_str)
+    source = SelectField('Откуда пришел клиент?',choices = [])
     comment = TextAreaField('Комментарий',validators=[Length(max=200)])
     submit = SubmitField('Добавить')
 
     def __init__(self, *args, **kwargs):
         super(ClientForm, self).__init__(*args, **kwargs)
-        s_1 = [('not_set','--выберите--')]
+        s_1 = [('not_set','--не указано--')]
         sources_db = [(str(a.id), a.name) for a in ClientSource.query.filter(ClientSource.active==True)]
         sources = s_1 + sources_db
         self.source.choices = sources
 
 
 class ClientChangeForm(FlaskForm):#изменяем данные клиента
-    sources = ClientSource.query.with_entities(ClientSource.id,ClientSource.name).all()
-    sources_str = list()
-    sources_str.append(('not_set','--выберите--'))
-    for s in sources:
-        s_id = str(s[0])
-        sources_str.append((s_id,s[1]))
     name = StringField('Имя',validators=[DataRequired(), Length(min=1,max=50)])
     phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
     insta = StringField('Instagram; образец @dressidea_coworking',validators=[Length(max=50)])
-    source = SelectField('Откуда пришел клиент?',choices = sources_str)
+    source = SelectField('Откуда пришел клиент?',choices = [])
     comment = TextAreaField('Комментарий',validators=[Length(max=200)])
     submit = SubmitField('Изменить')
+
+    def __init__(self, *args, **kwargs):
+        super(ClientChangeForm, self).__init__(*args, **kwargs)
+        s_1 = [('not_set','--не указано--')]
+        sources_db = [(str(a.id), a.name) for a in ClientSource.query.filter(ClientSource.active==True)]
+        sources = s_1 + sources_db
+        self.source.choices = sources
 
 
 class ClientSearchForm(FlaskForm):#ищем клиента для добавления брони / визита
@@ -147,8 +146,16 @@ class ClientSearchForm(FlaskForm):#ищем клиента для добавле
 
 
 class VisitForm(FlaskForm):#добавляем визит
+    promo_id = SelectField('Промоакция',choices = [])
     comment = StringField('Комментарий (необязательно)',validators=[Length(min=0,max=200)])
     submit = SubmitField('Добавить визит')
+
+    def __init__(self, *args, **kwargs):
+        super(VisitForm, self).__init__(*args, **kwargs)
+        s_1 = [('not_set','--без акции--')]
+        promos_db = [(str(a.id), a.name) for a in Promo.query.filter(Promo.active==True)]
+        promos = s_1 + promos_db
+        self.promo_id.choices = promos
 
 
 class BookingForm(FlaskForm):#добавляем / изменяем бронь
@@ -164,3 +171,17 @@ class PeriodInputForm(FlaskForm):#указать период для стати�
     begin_d = DateField('Начало, дата', format='%Y-%m-%d',validators=[DataRequired()])
     end_d = DateField('Конец, дата', format='%Y-%m-%d',validators=[DataRequired()])
     submit = SubmitField('Показать')
+
+
+class PromoForm(FlaskForm):#добавить промо акции
+    promo_types = [('fix_value','Фиксированный чек'),('discount','Скидка'),('group_visit','Групповой визит')]
+    name = StringField('Название акции',validators=[DataRequired(), Length(min=1,max=100)])
+    promo_type = SelectField('Тип акции',choices = promo_types)
+    value = DecimalField('Значение (тг. или %)',validators=[DataRequired()])
+    active = BooleanField(label='Акция активна')
+    submit = SubmitField('Добавить')
+
+
+class ConfirmGroupVisitAmountForm(FlaskForm):#подтвердить стоимость группового визита
+    amount = DecimalField('Сумма',validators=[DataRequired()])
+    submit = SubmitField('Подтвердить сумму и закрыть визит')

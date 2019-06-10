@@ -18,6 +18,7 @@
                 <th>Телефон</th>
                 <th>Начало</th>
                 <th>Как давно пришел</th>
+                <th>Акция</th>
                 <th>Текущая стоимость</th>
                 <th>Завершить</th>
                 <th>Комментарий</th>
@@ -32,7 +33,12 @@
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ time_live(v.begin) }}</td>
-                        <td>{{ "{:,.0f}".format(compute_amount(v.begin)) }}</td>
+                        <td>
+                            {% if v.promo_id %}
+                                {{ get_promo_name(v.promo_id) }}
+                            {% endif %}
+                        </td>
+                        <td>{{ "{:,.0f}".format(compute_amount(v.begin,v.promo_id)) }}</td>
                         <td><a href="{{ url_for('close_visit',visit_id=v.id) }}">Завершить</a></td>                        
                         <td>{{ v.comment }}</td>
                         {% if current_user.role == 'admin' %}
@@ -51,6 +57,7 @@
                 <th>Телефон</th>
                 <th>Начало</th>
                 <th>Окончание</th>
+                <th>Акция</th>
                 <th>Окончательная стоимость</th>
                 {% if param == 'today' %}
                     <th>Вернуть в открытые</th>
@@ -67,6 +74,11 @@
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ moment(v.end).format('LLL') }}</td>
+                        <td>
+                            {% if v.promo_id %}
+                                {{ get_promo_name(v.promo_id) }}
+                            {% endif %}                            
+                        </td>
                         <td>{{ "{:,.0f}".format(v.amount) }}</td>
                         {% if param == 'today' %}
                             <td><a href="{{ url_for('open_closed_visit',visit_id=v.id) }}">Открыть</a></td>

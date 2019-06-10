@@ -126,6 +126,7 @@ class Video(db.Model):#ссылки на мастер классы
 
 class Promo(db.Model):#промо акции
     id = db.Column(db.Integer,primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     promo_type = db.Column(db.Integer,nullable=False)#fix/discount
     value = db.Column(db.Float,nullable=False)
     active = db.Column(db.Boolean)
