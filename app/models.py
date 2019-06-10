@@ -89,6 +89,7 @@ class Visit(db.Model):#посещение
     amount = db.Column(db.Float)
     comment = db.Column(db.String(200))
     timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+    promo_id = db.Column(db.Integer,db.ForeignKey('promo.id'))
 
 
 class ItemInside(db.Model):#что внутри коворкинга
@@ -121,6 +122,14 @@ class Video(db.Model):#ссылки на мастер классы
     url = db.Column(db.String(500),nullable=False)
     active = db.Column(db.Boolean)
     category_id = db.Column(db.Integer,db.ForeignKey('video_category.id'))
+
+
+class Promo(db.Model):#промо акции
+    id = db.Column(db.Integer,primary_key=True)
+    promo_type = db.Column(db.Integer,nullable=False)#fix/discount
+    value = db.Column(db.Float,nullable=False)
+    active = db.Column(db.Boolean)
+    visits = db.relationship('Visit',backref='promo',lazy='dynamic')
 
 
 @login.user_loader

@@ -671,14 +671,14 @@ def visits_today(param=None):
         descr = 'Все визиты'
         visits = Visit.query.join(Client) \
                 .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
-                .order_by(Visit.begin).all()
+                .order_by(Visit.begin.desc()).all()
     elif param == 'today':#сегодняшние
         descr = 'Сегодняшние визиты'
         visits = Visit.query.join(Client) \
                 .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount) \
                 .filter(Visit.begin > yest_date) \
                 .filter(Visit.begin < tomor_date) \
-                .order_by(Visit.begin).all()
+                .order_by(Visit.begin.desc()).all()
     return render_template('visits_today.html',title=title,visits=visits, \
                             time_live=time_live,compute_amount=compute_amount,descr=descr,param=param)
 
