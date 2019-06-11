@@ -614,6 +614,7 @@ def add_visit_for_client(client_id = None):
                 visit = Visit(client_id=client_id,promo_id=form.promo_id.data,comment=form.comment.data)
             db.session.add(visit)
             db.session.commit()
+            flash('Визит открыт')
             return redirect(url_for('visits_today',param='today'))
         else:
             flash('У клиента есть открытые визиты. Перед добавлением нового визита их необходимо закрыть.')
@@ -639,17 +640,21 @@ def add_booking_for_client(client_id = None):
     return render_template('add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
-def compute_amount_no_promo(begin):#рассчитать стоимость визита без акций
+def compute_amount_no_promo(begin,param):#рассчитать стоимость визита без акций
     const_admin = Const_admin.query.first()
-    rate = const_admin.rate    
+    if param == 'standard':
+        rate = const_admin.rate
+    elif param == 'group_by_hours':
+        rate = const_admin.group_rate
     max_amount = const_admin.max_amount
     now = datetime.utcnow()
     delta = now - begin
     days, seconds = delta.days, delta.seconds
     duration = days*24*3600 + seconds
     amount_real = rate / 3600 * duration
-    amount = (amount_real // 100) * 100#округляем до 100 тг в меньшую сторону    
-    amount = min(amount, max_amount)#применяем максимальный чек
+    amount = (amount_real // 100) * 100#округляем до 100 тг в меньшую сторону
+    if param == 'standard':
+        amount = min(amount, max_amount)#применяем максимальный чек
     return amount
 
 
@@ -660,14 +665,16 @@ def compute_amount(begin,promo_id):#рассчитать стоимость ви
             amount = promo.value
         elif get_promo_type_name(promo.promo_type) == 'discount':#скидка
             coef = (1-promo.value / 100)
-            amount = compute_amount_no_promo(begin) * coef
+            amount = compute_amount_no_promo(begin,'standard') * coef
+        elif get_promo_type_name(promo.promo_type) == 'group_visit_by_hours':#групповой - по часам
+            amount = compute_amount_no_promo(begin,'group_by_hours')
     else:
-        amount = compute_amount_no_promo(begin)
+        amount = compute_amount_no_promo(begin,'standard')
     return amount
 
 
-def time_live(begin):#сколько времени клиент уже находится в заведении
-    now = datetime.utcnow()
+def time_live(begin,now):#сколько времени клиент уже находится в заведении
+    #now = datetime.utcnow()
     delta = now - begin
     days, seconds = delta.days, delta.seconds
     hours = days * 24 + seconds // 3600
@@ -707,7 +714,8 @@ def visits_today(param=None):
                 .order_by(Visit.begin.desc()).all()
     return render_template('visits_today.html',title=title,visits=visits, \
                             time_live=time_live,compute_amount=compute_amount, \
-                            get_promo_name=get_promo_name, descr=descr,param=param)
+                            get_promo_name=get_promo_name, descr=descr,param=param, \
+                            get_now=datetime.utcnow)
 
 
 @app.route('/close_visit/<visit_id>')#завершить визит
@@ -1103,7 +1111,8 @@ def video():#главная страница
     return render_template('video.html',title=title, meta_description = meta_description, \
                             meta_keywords=meta_keywords, videos=videos, categories=categories)
 
-promo_types = {'not_set':0,'fix_value':1,'discount':2,'group_visit':3}#типы и id промо акций
+
+promo_types = {'not_set':0,'fix_value':1,'discount':2,'group_visit':3,'group_visit_by_hours':4}#типы и id промо акций
 
 def get_promo_type_id(promo_name):#получаем id типа акции исходя из выбранного в форме
     res = promo_types[promo_name]

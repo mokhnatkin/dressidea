@@ -32,7 +32,7 @@
                         <td><a href="{{ url_for('client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
-                        <td>{{ time_live(v.begin) }}</td>
+                        <td>{{ time_live(v.begin,get_now()) }}</td>
                         <td>
                             {% if v.promo_id %}
                                 {{ get_promo_name(v.promo_id) }}

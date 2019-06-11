@@ -175,7 +175,7 @@ class PeriodInputForm(FlaskForm):#указать период для стати�
 
 
 class PromoForm(FlaskForm):#добавить промо акции
-    promo_types = [('fix_value','Фиксированный чек'),('discount','Скидка'),('group_visit','Групповой визит')]
+    promo_types = [('fix_value','Фиксированный чек'),('discount','Скидка'),('group_visit','Групповой визит'),('group_visit_by_hours','Групповой визит по часам')]
     name = StringField('Название акции',validators=[DataRequired(), Length(min=1,max=100)])
     promo_type = SelectField('Тип акции',choices = promo_types)
     value = DecimalField('Значение (тг. или %)',validators=[DataRequired()])
