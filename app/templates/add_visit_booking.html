@@ -26,9 +26,9 @@
                     <tr>                        
                         <td>{{ client_by_phone.name }}</td>
                         <td>{{ client_by_phone.phone }}</td>
-                        <td><button type="button" class="btn btn-default"><a href="{{ url_for('add_visit_for_client',client_id=client_by_phone.id) }}">Добавить визит</a></button></td>
-                        <td><button type="button" class="btn btn-default"><a href="{{ url_for('add_booking_for_client',client_id=client_by_phone.id) }}">Добавить бронь</a></button></td>
-                    </tr>                    
+                        <td><a href="{{ url_for('add_visit_for_client',client_id=client_by_phone.id) }}">Добавить визит</a></td>
+                        <td><a href="{{ url_for('add_booking_for_client',client_id=client_by_phone.id) }}">Добавить бронь</a></td>
+                    </tr>
                 {% else %}
                     {% for c in clients %}
                     <tr>

@@ -55,6 +55,7 @@ class PhotoEditForm(FlaskForm):#редактировать фото
 class Const_adminForm(FlaskForm):#константы админки
     rate = DecimalField(label='Тариф за час, тг',validators=[DataRequired()])
     max_amount = DecimalField(label='Максимальный чек, тг',validators=[DataRequired()])
+    group_rate = DecimalField(label='Групповой визит - тариф за час, тг',validators=[DataRequired()])
     google_analytics_tracking_id = StringField('Google Аналитика Tracking ID')
     submit = SubmitField('Изменить')
 

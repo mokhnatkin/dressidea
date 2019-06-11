@@ -294,9 +294,11 @@ def const_admin():
         if const_set is not None:
             const_set.rate=form.rate.data
             const_set.max_amount = form.max_amount.data
+            const_set.group_rate=form.group_rate.data
             const_set.google_analytics_tracking_id = form.google_analytics_tracking_id.data
         else:
-            const = Const_admin(rate=form.rate.data,max_amount=form.max_amount.data,google_analytics_tracking_id=form.google_analytics_tracking_id.data)
+            const = Const_admin(rate=form.rate.data,group_rate=form.group_rate.data, \
+                max_amount=form.max_amount.data,google_analytics_tracking_id=form.google_analytics_tracking_id.data)
             db.session.add(const)
         db.session.commit()
         flash('Значения констант изменены!')
