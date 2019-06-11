@@ -576,7 +576,12 @@ def add_visit_booking():
     form = ClientSearchForm()
     client_by_phone = None
     client_found = False
-    clients = Client.query.order_by(Client.timestamp.desc()).limit(10).all()
+    page = request.args.get('page',1,type=int)
+    clients = Client.query \
+            .order_by(Client.timestamp.desc()) \
+            .paginate(page,app.config['PAGINATION_ITEMS_PER_PAGE'],False)
+    next_url = url_for('add_visit_booking',page=clients.next_num) if clients.has_next else None
+    prev_url = url_for('add_visit_booking',page=clients.prev_num) if clients.has_prev else None            
     if form.validate_on_submit():
         try:
             client_by_phone = Client.query.filter(Client.phone == form.phone.data).first()            
@@ -587,9 +592,20 @@ def add_visit_booking():
                 flash('Клиент с данным номером не найден в базе. Его нужно создать.')
         except:
             flash('Не удалось выполнить поиск.')
-    return render_template('add_visit_booking.html',title=title,descr=descr,clients=clients,\
-                    form=form,client_found=client_found,client_by_phone=client_by_phone)
+    return render_template('add_visit_booking.html',title=title,descr=descr,clients=clients.items,\
+                    form=form,client_found=client_found,client_by_phone=client_by_phone, \
+                    next_url=next_url,prev_url=prev_url)
 
+"""
+    page = request.args.get('page',1,type=int)
+    log_events = View_log.query.join(User) \
+                .with_entities(User.username,View_log.timestamp,View_log.view_id) \
+                .order_by(View_log.timestamp.desc()).paginate(page,app.config['POSTS_PER_PAGE'],False)
+    next_url = url_for('usage_log',page=log_events.next_num) if log_events.has_next else None
+    prev_url = url_for('usage_log',page=log_events.prev_num) if log_events.has_prev else None
+    return render_template('usage_log.html',title='Лог использования портала', \
+        get_view_name=get_view_name,log_events=log_events.items,next_url=next_url,prev_url=prev_url)
+"""
 
 @app.route('/add_visit/<client_id>',methods=['GET', 'POST'])#добавляем визит
 @login_required
