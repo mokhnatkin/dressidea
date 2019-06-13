@@ -88,6 +88,7 @@ class ClientSourceForm(FlaskForm):#добавить / изменить исто�
     active = BooleanField(label='Активен')
     submit = SubmitField('Добавить / изменить')
 
+
 class VideoForm(FlaskForm):#добавить видео мастер класса    
     v_types = app.config['V_TYPES_STR']
     v_type = SelectField('Выберите вид мастер-класса',choices = v_types,validators=[DataRequired()])
@@ -190,3 +191,19 @@ class PromoForm(FlaskForm):#добавить промо акции
 class ConfirmGroupVisitAmountForm(FlaskForm):#подтвердить стоимость группового визита
     amount = DecimalField('Сумма',validators=[DataRequired()])
     submit = SubmitField('Подтвердить сумму и закрыть визит')
+
+
+class EidtVisitAmountForm(FlaskForm):#изменить стоимость визита
+    promo_id = SelectField('Промоакция',choices = [])
+    comment = StringField('Комментарий (необязательно)',validators=[Length(min=0,max=200)])
+    amount = DecimalField('Сумма',validators=[DataRequired()])
+    submit = SubmitField('Изменить визит')
+
+    def __init__(self, *args, **kwargs):
+        super(EidtVisitAmountForm, self).__init__(*args, **kwargs)
+        s_1 = [('not_set','--стандартный визит--')]
+        promos_db = [(str(a.id), a.name) for a in Promo.query.filter(Promo.active==True)]
+        promos = s_1 + promos_db
+        self.promo_id.choices = promos
+    
+    

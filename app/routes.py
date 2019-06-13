@@ -4,7 +4,7 @@ from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminF
                         Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
                         ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
                         PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
-                        ConfirmGroupVisitAmountForm
+                        ConfirmGroupVisitAmountForm, EidtVisitAmountForm
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
                         Client, Visit, Booking, Video, VideoCategory, Promo
 from flask_login import current_user, login_user, logout_user, login_required
@@ -962,6 +962,25 @@ def delete_visit(visit_id = None):
     return redirect(url_for('visits_today',param='all'))
 
 
+@app.route('/edit_visit/<visit_id>',methods=['GET', 'POST'])#изменить визит
+@login_required
+@required_roles('admin')
+def edit_visit(visit_id = None):
+    form = EidtVisitAmountForm()
+    visit = Visit.query.filter(Visit.id == visit_id).first()
+    if request.method == 'GET':
+        form = EidtVisitAmountForm(obj=visit)
+    if form.validate_on_submit():
+        if form.promo_id.data != 'not_set':
+            visit.promo_id = form.promo_id.data
+        visit.comment = form.comment.data
+        visit.amount = form.amount.data
+        db.session.commit()        
+        flash('Визит успешно изменен!')
+        return redirect(url_for('visits_today',param='all'))        
+    return render_template('edit_visit.html', form=form)
+
+
 @app.route('/delete_booking/<booking_id>')#удалить бронь
 @login_required
 @required_roles('admin')
@@ -1160,7 +1179,7 @@ def video_per_category(cat_id = None):
                 show_video_cat_name=show_video_cat_name)
 
 
-def get_photos_for_photo_albums(album_name):
+def get_photos_for_photo_albums(album_name):#список фото для отображения в каруселе в мастер-классах
     photos = Photo.query \
             .filter(Photo.photo_type=='photoalbum') \
             .filter(Photo.photoalbum==album_name).all()
