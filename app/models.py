@@ -52,6 +52,7 @@ class Photo(db.Model):#храним в таблице имена загруже�
     photo_type = db.Column(db.String(20), nullable=False)
     timestamp = db.Column(db.DateTime,default=datetime.utcnow)
     active = db.Column(db.Boolean)
+    photoalbum = db.Column(db.String(500))
 
     def __repr__(self):
         return '<Photo {}>'.format(self.name)
@@ -122,13 +123,14 @@ class Video(db.Model):#ссылки на мастер классы
     comment = db.Column(db.String(1000),nullable=False)
     url = db.Column(db.String(500),nullable=False)
     active = db.Column(db.Boolean)
+    v_type = db.Column(db.Integer,nullable=False)#тип мастер класса - фото/видео
     category_id = db.Column(db.Integer,db.ForeignKey('video_category.id'))
 
 
 class Promo(db.Model):#промо акции
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    promo_type = db.Column(db.Integer,nullable=False)#fix/discount
+    promo_type = db.Column(db.Integer,nullable=False)#fix/discount/group/group_by_hours
     value = db.Column(db.Float,nullable=False)
     active = db.Column(db.Boolean)
     visits = db.relationship('Visit',backref='promo',lazy='dynamic')

@@ -2,11 +2,24 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    <h1>Создать / изменить видео</h1>
+    <h1>Создать / изменить видео / фотоальбом (мастеркласс)</h1>
     <p>{{ descr }}</p>
+    
     <div class="row">
         <div class="col-md-4">
-            {{ wtf.quick_form(form) }}
+            <form class="form form-basic" method="post" enctype="multipart/form-data" role="form">
+                {{ form.hidden_tag() }}
+                {{ wtf.form_errors(form, hiddens="only") }}    
+                {{ wtf.form_field(form.v_type) }}
+                {{ wtf.form_field(form.category) }}
+                {{ wtf.form_field(form.url) }}
+                {{ wtf.form_field(form.descr) }}
+                {{ wtf.form_field(form.comment) }}
+                {{ wtf.form_field(form.photos) }}
+                {{ wtf.form_field(form.active) }}
+                {{ wtf.form_field(form.submit) }}    
+            </form>
         </div>
     </div>
+
 {% endblock %}

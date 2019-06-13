@@ -2,12 +2,18 @@
 
 {% block app_content %}
 <h1>Список загруженных фото</h1>
+<a href="{{ url_for('files',param='all',album_name='None') }}" class="btn btn-info" role="button">Все фото</a>
+<a href="{{ url_for('files',param='carousel',album_name='None') }}" class="btn btn-info" role="button">Карусель</a>
+<a href="{{ url_for('files',param='gallery',album_name='None') }}" class="btn btn-info" role="button">Галлерея</a>
+<a href="{{ url_for('files',param='photoalbum',album_name='None_album_selected') }}" class="btn btn-info" role="button">Фотоальбомы</a>
+<br>
 <div>
     <div class="table-responsive">
         <table class="table table-hover">
             <tr>
                 <th>Имя файла</th>
                 <th>Тип</th>
+                <th>Фотоальбом</th>
                 <th>Заголовок</th>
                 <th>Описание</th>
                 <th>Дата-время загрузки</th>
@@ -18,12 +24,17 @@
             </tr>
             {% for f in files %}
             <tr>
-                <td><a href="{{ url_for('downloadFile',fname=f.name) }}">{{ f.name }}</a></td>
                 <td>
-                    {% if f.photo_type=='carousel' %}
-                        Карусель
+                    {% if f.photoalbum %}
+                        <a href="{{ url_for('downloadFile',ftype=f.photo_type,album_name=f.photoalbum,fname=f.name) }}">{{ f.name }}</a>
                     {% else %}
-                        Галерея
+                        <a href="{{ url_for('downloadFile',ftype=f.photo_type,album_name='None',fname=f.name) }}">{{ f.name }}</a>
+                    {% endif %}
+                </td>
+                <td>{{ f.photo_type }}</td>
+                <td>
+                    {% if f.photoalbum %}
+                        {{ f.photoalbum }}
                     {% endif %}
                 </td>
                 <td>

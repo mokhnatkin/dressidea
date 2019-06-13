@@ -72,8 +72,8 @@
                     <li><a class="navbar-brand" href="{{ url_for('all_bookings',param='today') }}">Брони</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('stat') }}">Статистика</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('add_video') }}">+ видео</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('video_list') }}">Все видео</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('add_video') }}">+ мастер-класс</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('video_list') }}">Все мастер-классы</a></li>
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -82,7 +82,7 @@
                         <div class="dropdown-menu">
                             <ul class="nav navbar-nav">
                                 <li><a href="{{ url_for('upload_file') }}">Загрузить фото</a></li>
-                                <li><a href="{{ url_for('files') }}">Список фото</a></li>
+                                <li><a href="{{ url_for('files',param='all',album_name='None') }}">Список фото</a></li>
                             </ul>
                         </div>
                     </div>

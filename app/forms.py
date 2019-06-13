@@ -1,12 +1,13 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
-                TextAreaField, SelectField, DecimalField, IntegerField
-from wtforms import DateTimeField
+                TextAreaField, SelectField, DecimalField, IntegerField, \
+                DateTimeField, MultipleFileField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from app.models import User, ClientSource, VideoCategory, Promo
 from wtforms.fields.html5 import DateField
 from wtforms.fields.html5 import TimeField
+from app import app
 
 
 class LoginForm(FlaskForm):#вход
@@ -35,8 +36,8 @@ class RegistrationForm(FlaskForm):#зарегистрироваться
 
 
 class PhotoUploadForm(FlaskForm):#загрузить фото
-    photo = FileField(label='Выберите фото для загрузки',validators=[FileRequired(),FileAllowed(['jpeg', 'jpg', 'png'], 'Только изображение!')])
-    photo_types = [('carousel','Карусель'), ('gallery','Галерея')]#типы фото
+    photo_types = app.config['PHOTO_TYPES']
+    photo = FileField(label='Выберите фото для загрузки',validators=[FileRequired(),FileAllowed(app.config['EXT_FOR_PHOTOS'], 'Только изображение!')])    
     photo_type = SelectField(label='Куда загрузить фото',choices = photo_types)
     caption = StringField('Заголовок')
     descr = StringField('Описание')
@@ -45,7 +46,7 @@ class PhotoUploadForm(FlaskForm):#загрузить фото
 
 
 class PhotoEditForm(FlaskForm):#редактировать фото    
-    photo_types = [('carousel','Карусель'), ('gallery','Галерея')]#типы фото
+    photo_types = app.config['PHOTO_TYPES']
     photo_type = SelectField(label='Куда загрузить фото',choices = photo_types)
     caption = StringField('Заголовок')
     descr = StringField('Описание')    
@@ -87,14 +88,17 @@ class ClientSourceForm(FlaskForm):#добавить / изменить исто�
     active = BooleanField(label='Активен')
     submit = SubmitField('Добавить / изменить')
 
-
-class VideoForm(FlaskForm):#добавить видео мастер класса
-    category = SelectField('Выберите категорию',choices = [],validators=[DataRequired()])
-    url = StringField('Последняя часть ссылки на видео; например, если ссылка https://www.youtube.com/watch?v=Yai9fmGJTaQ, то в этом поле нужно указать Yai9fmGJTaQ',validators=[DataRequired(), Length(min=1,max=500)])
-    descr = StringField('Название видео',validators=[DataRequired(), Length(min=1,max=500)])
-    comment = TextAreaField('Описание видео',validators=[DataRequired(), Length(min=1,max=1000)])
+class VideoForm(FlaskForm):#добавить видео мастер класса    
+    v_types = app.config['V_TYPES_STR']
+    v_type = SelectField('Выберите вид мастер-класса',choices = v_types,validators=[DataRequired()])
+    category = SelectField('Выберите категорию',choices = [],validators=[DataRequired()])    
+    url = StringField('Если видео: последняя часть ссылки на видео; например, если ссылка https://www.youtube.com/watch?v=Yai9fmGJTaQ, то в этом поле нужно указать Yai9fmGJTaQ; если фото: название альбома для системы', \
+        validators=[DataRequired(), Length(min=1,max=500)])
+    descr = StringField('Название видео / фотоальбома для отображения на сайте',validators=[DataRequired(), Length(min=1,max=500)])
+    comment = TextAreaField('Описание видео / фотоальбома',validators=[DataRequired(), Length(min=1,max=1000)])
+    photos = MultipleFileField('Фото для загрузки в карусель')
     active = BooleanField(label='Отображать на сайте')
-    submit = SubmitField('Добавить / изменить видео')
+    submit = SubmitField('Добавить / изменить видео / фотоальбом')
 
     def __init__(self, *args, **kwargs):
         super(VideoForm, self).__init__(*args, **kwargs)        
@@ -153,7 +157,7 @@ class VisitForm(FlaskForm):#добавляем визит
 
     def __init__(self, *args, **kwargs):
         super(VisitForm, self).__init__(*args, **kwargs)
-        s_1 = [('not_set','--без акции--')]
+        s_1 = [('not_set','--стандартный визит--')]
         promos_db = [(str(a.id), a.name) for a in Promo.query.filter(Promo.active==True)]
         promos = s_1 + promos_db
         self.promo_id.choices = promos
@@ -175,7 +179,7 @@ class PeriodInputForm(FlaskForm):#указать период для стати�
 
 
 class PromoForm(FlaskForm):#добавить промо акции
-    promo_types = [('fix_value','Фиксированный чек'),('discount','Скидка'),('group_visit','Групповой визит'),('group_visit_by_hours','Групповой визит по часам')]
+    promo_types = app.config['PROMO_TYPES_STR']
     name = StringField('Название акции',validators=[DataRequired(), Length(min=1,max=100)])
     promo_type = SelectField('Тип акции',choices = promo_types)
     value = DecimalField('Значение (тг. или %)',validators=[DataRequired()])

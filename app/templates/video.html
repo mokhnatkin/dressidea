@@ -16,10 +16,50 @@
                     </div>
                     <div class="col-md-8 col-sm-12 col-xs-12">
                         {% if v.id == cat.id %}
-                        <div class="container">
-                            <iframe style="max-width:100%;" width="{{g.const_public.ya_map_width}}" height="{{g.const_public.ya_map_height}}" src="https://www.youtube.com/embed/{{ v.url }}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-                            </iframe>
-                        </div>
+                            {% if get_video_type_name(v.v_type)=='video' %}<!--you tube video-->
+                                <div class="container" style="margin: 10px;">
+                                    <iframe style="max-width:100%;" width="{{g.const_public.ya_map_width}}" height="{{g.const_public.ya_map_height}}" src="https://www.youtube.com/embed/{{ v.url }}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+                                    </iframe>
+                                </div>
+                            {% else %}<!--photo album - carousel-->
+                                <div class="container" style="max-width:100%; margin: 10px;">
+                                    <div id="myCarousel" class="carousel slide" data-ride="carousel" style="max-width:{{g.const_public.ya_map_width}}px"><!-- Карусель -->
+                                        <!-- Indicators -->
+                                        <ol class="carousel-indicators">
+                                            {% for i in range(len(get_photos_for_photo_albums(v.url))) %}
+                                                {% if i==0 %}
+                                                    <li data-target="#myCarousel" data-slide-to="{{i}}" class="active"></li>
+                                                {% else %}
+                                                    <li data-target="#myCarousel" data-slide-to="{{i}}"></li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </ol>
+                                        <!-- Wrapper for slides -->
+                                        <div class="carousel-inner">
+                                            {% for i in range(len(get_photos_for_photo_albums(v.url))) %}
+                                                {% if i==0 %}
+                                                    <div class="item active">
+                                                        <img src="{{ url_for('get_path_to_static_photo_albums',album_name=v.url,fname=get_photos_for_photo_albums(v.url)[i].name) }}" alt="Швейный коворкинг Алматы мастер-класс">
+                                                    </div>
+                                                {% else %}                  
+                                                    <div class="item">
+                                                        <img src="{{ url_for('get_path_to_static_photo_albums',album_name=v.url,fname=get_photos_for_photo_albums(v.url)[i].name) }}" alt="Швейный коворкинг Алматы мастер-класс">
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>                  
+                                        <!-- Left and right controls -->
+                                        <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+                                            <span class="glyphicon glyphicon-chevron-left"></span>
+                                            <span class="sr-only">Назад</span>
+                                        </a>
+                                        <a class="right carousel-control" href="#myCarousel" data-slide="next">
+                                            <span class="glyphicon glyphicon-chevron-right"></span>
+                                            <span class="sr-only">Вперед</span>
+                                        </a>
+                                    </div>
+                                </div>                            
+                            {% endif %}
                         {% endif %}                        
                     </div>                
                 </div>

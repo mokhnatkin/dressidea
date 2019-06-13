@@ -16,6 +16,7 @@ from flask_babel import get_locale
 import os
 from functools import wraps
 from sqlalchemy import func
+import cyrtranslit
 
 
 @app.before_request
@@ -145,7 +146,7 @@ def upload_file():
     form = PhotoUploadForm()
     descr = 'Здесь загружаются фото для отображения в карусели на главной странице, или в галерее'    
     if form.validate_on_submit():
-        f = form.photo.data
+        f = form.photo.data        
         filename = secure_filename(f.filename)
         filename = add_str_timestamp(filename)
         f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -201,15 +202,27 @@ def edit_file(fid = None):
     return render_template('edit_file.html', title=title,form=form,descr=descr)
 
 
-@app.route('/files')#список загруженных файлов
+@app.route('/files/<param>/<album_name>')#список загруженных фото
 @login_required
 @required_roles('admin')
-def files():
-    files = Photo.query.all()
+def files(param,album_name=None):
+    if param == 'all':
+        files = Photo.query.all()
+    elif param == 'carousel':
+        files = Photo.query.filter(Photo.photo_type=='carousel').all()
+    elif param == 'gallery':
+        files = Photo.query.filter(Photo.photo_type=='gallery').all()
+    elif param == 'photoalbum':
+        if album_name == 'None_album_selected':
+            files = Photo.query.filter(Photo.photo_type=='photoalbum').all()
+        else:
+            files = Photo.query \
+                .filter(Photo.photo_type=='photoalbum') \
+                .filter(Photo.photoalbum==album_name).all()
     return render_template('files.html',files=files)
 
 
-@app.route('/gallery')#список загруженных файлов
+@app.route('/gallery')#фото галлерея
 def gallery():
     title = 'Фото швейного коворкинга Алматы'
     meta_description = 'Фотографии швейного оборудования. Швейный коворкинг, место для любителей шитья, город Алматы.'
@@ -233,17 +246,26 @@ def gallery():
                         show_photos=show_photos, meta_description=meta_description,meta_keywords=meta_keywords)
 
 
-@app.route('/files/<fname>')#файл для скачивания на комп
+@app.route('/files_download/<ftype>/<album_name>/<fname>')#файл для скачивания на комп
 @login_required
 @required_roles('admin')
-def downloadFile(fname = None):
-    p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],fname)
+def downloadFile(ftype,fname,album_name):
+    if ftype=='photoalbum':
+        p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],app.config['PHOTO_ALBUMS_FOLDER'],album_name,fname)
+    else:
+        p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],fname)
     return send_file(p, as_attachment=True)
 
 
 @app.route('/get_path_to_static/<fname>')#путь к директории с фото, для отображения фото
 def get_path_to_static(fname = None):
     p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],fname)
+    return send_file(p)
+
+
+@app.route('/get_path_to_static_photo_albums/<album_name>/<fname>')#путь к директории с фото, для отображения фото (фотоальбомы)
+def get_path_to_static_photo_albums(album_name,fname):
+    p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],app.config['PHOTO_ALBUMS_FOLDER'],album_name,fname)
     return send_file(p)
 
 
@@ -596,16 +618,6 @@ def add_visit_booking():
                     form=form,client_found=client_found,client_by_phone=client_by_phone, \
                     next_url=next_url,prev_url=prev_url)
 
-"""
-    page = request.args.get('page',1,type=int)
-    log_events = View_log.query.join(User) \
-                .with_entities(User.username,View_log.timestamp,View_log.view_id) \
-                .order_by(View_log.timestamp.desc()).paginate(page,app.config['POSTS_PER_PAGE'],False)
-    next_url = url_for('usage_log',page=log_events.next_num) if log_events.has_next else None
-    prev_url = url_for('usage_log',page=log_events.prev_num) if log_events.has_prev else None
-    return render_template('usage_log.html',title='Лог использования портала', \
-        get_view_name=get_view_name,log_events=log_events.items,next_url=next_url,prev_url=prev_url)
-"""
 
 @app.route('/add_visit/<client_id>',methods=['GET', 'POST'])#добавляем визит
 @login_required
@@ -689,8 +701,7 @@ def compute_amount(begin,promo_id):#рассчитать стоимость ви
     return amount
 
 
-def time_live(begin,now):#сколько времени клиент уже находится в заведении
-    #now = datetime.utcnow()
+def time_live(begin,now):#сколько времени клиент уже находится в заведении    
     delta = now - begin
     days, seconds = delta.days, delta.seconds
     hours = days * 24 + seconds // 3600
@@ -1033,7 +1044,7 @@ def edit_video_category(item_id = None):
 @login_required
 def add_video():
     title='Добавить видео мастер-класса'
-    descr = 'Здесь можно добавить новое видео'
+    descr = 'Здесь можно добавить новое видео / фотоальбом.'
     form = VideoForm()
     if form.validate_on_submit():
         url = form.url.data
@@ -1046,12 +1057,33 @@ def add_video():
         active = form.active.data
         category = int(form.category.data)
         if url_already_in_DB is None:
-            video = Video(url=url,descr=v_descr,comment=comment,active=active,category_id=category)
+            v_type = get_video_type_id(form.v_type.data)
+            if form.v_type.data == 'photo':#фото - создадим папку с безопасным именем
+                url = cyrtranslit.to_latin(url,'ru')#to latin
+                url = secure_filename(url)#secure folder name
+                photo_album_already_in_DB = Video.query.filter(Video.url == url).first()
+                if photo_album_already_in_DB is None:
+                    new_folder_for_photo_album = os.path.join(app.config['UPLOAD_FOLDER'], app.config['PHOTO_ALBUMS_FOLDER'], url)
+                    if not os.path.exists(new_folder_for_photo_album):
+                        os.makedirs(new_folder_for_photo_album)#создаем папку для фото альбома
+                    if form.photos.data:                        
+                        for f in form.photos.data:                            
+                            fname = secure_filename(f.filename)
+                            fname = add_str_timestamp(fname)
+                            f.save(os.path.join(new_folder_for_photo_album,fname))
+                            photo_type = 'photoalbum'
+                            photo = Photo(name=fname,photo_type=photo_type,photoalbum=url,active=True,caption=v_descr,descr=comment)
+                            db.session.add(photo)
+                else:
+                    flash('Ошибка - фотоальбом с таким названием уже есть в базе')
+                    return redirect(url_for('add_video'))            
+            video = Video(url=url,descr=v_descr,v_type=v_type,comment=comment,active=active,category_id=category)
             db.session.add(video)
             db.session.commit()
-            flash('Видео добавлено.')
+            flash('Мастер-класс добавлен.')
         else:
-            flash('Ошибка - видео с такой ссылкой уже есть в базе.')
+            flash('Ошибка - видео с такой ссылкой / альбом с таким названием уже есть в базе.')
+            return redirect(url_for('add_video'))
         return redirect(url_for('add_video'))
     return render_template('add_video.html',title=title,descr=descr,form=form)
 
@@ -1060,17 +1092,19 @@ def add_video():
 @login_required
 def edit_video(video_id=None):
     title = 'Изменить видео'
-    descr = 'Здесь можно изменить видео'    
+    descr = 'Здесь можно изменить видео / фотоальбом. При изменении фотоальбома не меняется название альбома для системы и сами фото.'    
     form = VideoForm()
     video = Video.query.filter(Video.id == video_id).first()
     if request.method == 'GET':
         form = VideoForm(obj=video)
     if form.validate_on_submit():
-        video.url = form.url.data
+        video.v_type = get_video_type_id(form.v_type.data)
+        if form.v_type.data != 'photo':
+            video.url = form.url.data
         video.descr = form.descr.data
         video.comment = form.comment.data
         video.active = form.active.data
-        video.category_id = form.category.data        
+        video.category_id = form.category.data
         db.session.commit()
         flash('Данные видео изменены!')
         return redirect(url_for('video_list'))
@@ -1082,14 +1116,31 @@ def show_video_cat_name(cat_id):#возвращает имя канала исх
     name = s.name
     return name
 
+v_types = app.config['V_TYPES']#типы мастер=классов (для системы)
+v_types_str = app.config['V_TYPES_STR']#типы мастер=классов (для отображения)
+
+
+def get_video_type_id(video_name):#получаем id типа мастер-класса исходя из выбранного в форме
+    res = v_types[video_name]
+    return res
+
+
+def get_video_type_name(video_id):#получаем имя типа мастер-класса исходя из выбранного в форме
+    res = None   
+    for key,val in v_types.items():
+        if val==video_id:
+            res = key    
+    return res    
+
+
 @app.route('/video_list')#все видео мастер классов
 @login_required
 def video_list():
-    title = 'Список видео'
-    descr = 'Список всех видео мастер-классов'
+    title = 'Список мастер-классов'
+    descr = 'Список всех мастер-классов (видео youtube и фотоальбомов)'
     videos = Video.query.order_by(Video.timestamp.desc()).all()
     return render_template('video_list.html',title=title,descr=descr,videos=videos, \
-                show_video_cat_name=show_video_cat_name)
+                show_video_cat_name=show_video_cat_name,get_video_type_name=get_video_type_name)
 
 
 @app.route('/video_per_category/<cat_id>')#все видео мастер классов в данной категории
@@ -1109,6 +1160,12 @@ def video_per_category(cat_id = None):
                 show_video_cat_name=show_video_cat_name)
 
 
+def get_photos_for_photo_albums(album_name):
+    photos = Photo.query \
+            .filter(Photo.photo_type=='photoalbum') \
+            .filter(Photo.photoalbum==album_name).all()
+    return photos
+
 @app.route('/video')#видео мастер-классов
 def video():#главная страница
     title = 'Швейный коворкинг, город Алматы, мастер-классы'
@@ -1119,16 +1176,19 @@ def video():#главная страница
                 .filter(VideoCategory.active == True) \
                 .order_by(VideoCategory.num).all()
     videos = VideoCategory.query.join(Video) \
-                    .with_entities(VideoCategory.id,Video.descr,Video.comment,Video.url,Video.timestamp) \
+                    .with_entities(VideoCategory.id,Video.v_type,Video.descr,Video.comment,Video.url,Video.timestamp) \
                     .filter(VideoCategory.active == True) \
                     .filter(Video.active == True) \
                     .order_by(VideoCategory.num) \
                     .order_by(Video.timestamp.desc()).all()
     return render_template('video.html',title=title, meta_description = meta_description, \
-                            meta_keywords=meta_keywords, videos=videos, categories=categories)
+                            meta_keywords=meta_keywords, videos=videos, categories=categories, \
+                            get_video_type_name=get_video_type_name, \
+                            get_path_to_static_photo_albums=get_path_to_static_photo_albums,len=len,
+                            get_photos_for_photo_albums=get_photos_for_photo_albums)
 
 
-promo_types = {'not_set':0,'fix_value':1,'discount':2,'group_visit':3,'group_visit_by_hours':4}#типы и id промо акций
+promo_types = app.config['PROMO_TYPES']#типы и id промо акций
 
 def get_promo_type_id(promo_name):#получаем id типа акции исходя из выбранного в форме
     res = promo_types[promo_name]
