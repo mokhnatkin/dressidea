@@ -247,8 +247,6 @@ def gallery():
 
 
 @app.route('/files_download/<ftype>/<album_name>/<fname>')#файл для скачивания на комп
-@login_required
-@required_roles('admin')
 def downloadFile(ftype,fname,album_name):
     if ftype=='photoalbum':
         p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],app.config['PHOTO_ALBUMS_FOLDER'],album_name,fname)
