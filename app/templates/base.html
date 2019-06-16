@@ -44,6 +44,7 @@
                     <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts" style="COLOR: #542947">Контакты</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('gallery') }}" style="COLOR: #542947">Фото</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('about') }}" style="COLOR: #542947">О проекте</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('ask_question') }}" style="COLOR: #542947">Задать вопрос</a></li>
                     <!--<li><a class="navbar-brand" href="{{ url_for('video') }}" style="COLOR: #542947">Мастер-классы</a></li>-->
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
@@ -73,7 +74,8 @@
                     <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('stat') }}">Статистика</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('add_video') }}">+ мастер-класс</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('video_list') }}">Все мастер-классы</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('video_list') }}">Мастер-классы</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('all_questions') }}">Вопросы</a></li>
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -144,6 +146,7 @@
                     <a href="{{ url_for('index') }}#contacts">Контакты</a>
                     <a href="{{ url_for('gallery') }}">Фото</a>
                     <a href="{{ url_for('about') }}">О проекте</a>
+                    <a href="{{ url_for('ask_question') }}">Задать вопрос</a>
                     <!--<a href="{{ url_for('video') }}">Мастер-классы</a>-->
                 </footer>
             </div>

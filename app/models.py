@@ -70,7 +70,7 @@ class Client(db.Model):#карточка клиента
     visits = db.relationship('Visit',backref='client',lazy='dynamic')
 
     def __repr__(self):
-        return '<Client {}>'.format(self.name)    
+        return '<Client {}>'.format(self.name)
 
 
 class Booking(db.Model):#запись (регистрация) на посещение
@@ -134,6 +134,14 @@ class Promo(db.Model):#промо акции
     value = db.Column(db.Float,nullable=False)
     active = db.Column(db.Boolean)
     visits = db.relationship('Visit',backref='promo',lazy='dynamic')
+
+
+class QuestionFromSite(db.Model):#вопрос с сайта
+    id = db.Column(db.Integer,primary_key=True)
+    name = db.Column(db.String(50),index=True, nullable=False)
+    phone = db.Column(db.String(20),index=True, nullable=False)    
+    timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+    question = db.Column(db.String(1000))
 
 
 @login.user_loader

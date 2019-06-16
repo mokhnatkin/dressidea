@@ -1,0 +1,12 @@
+<p>С сайта dressidea.kz поступил новый вопрос.</p>
+
+<p>Автор: <b>{{ q_name }}</b></p>
+<p>Телефон: <b>{{ q_phone }}</b></p>
+<p>Дата и время вопроса: <b>{{ _timestamp }}</b></p>
+<br>
+<p>Текст вопроса:</p>
+<p>{{ q_question }}</p>
+<br>
+<p>Чтобы посмотреть вопрос в dressidea.kz, пройдите по 
+    <a href="{{ url_for('question',q_id=_id,_external=True) }}">ссылке</a>
+</p>

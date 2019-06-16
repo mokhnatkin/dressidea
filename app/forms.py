@@ -193,17 +193,31 @@ class ConfirmGroupVisitAmountForm(FlaskForm):#подтвердить стоим�
     submit = SubmitField('Подтвердить сумму и закрыть визит')
 
 
-class EidtVisitAmountForm(FlaskForm):#изменить стоимость визита
+class EditVisitAmountForm(FlaskForm):#изменить стоимость визита
     promo_id = SelectField('Промоакция',choices = [])
     comment = StringField('Комментарий (необязательно)',validators=[Length(min=0,max=200)])
     amount = DecimalField('Сумма',validators=[DataRequired()])
     submit = SubmitField('Изменить визит')
 
     def __init__(self, *args, **kwargs):
-        super(EidtVisitAmountForm, self).__init__(*args, **kwargs)
+        super(EditVisitAmountForm, self).__init__(*args, **kwargs)
         s_1 = [('not_set','--стандартный визит--')]
         promos_db = [(str(a.id), a.name) for a in Promo.query.filter(Promo.active==True)]
         promos = s_1 + promos_db
         self.promo_id.choices = promos
     
-    
+
+class QuestionForm(FlaskForm):#задать вопрос на сайте
+    name = StringField('Ваше имя',validators=[DataRequired(), Length(min=1,max=50)])
+    phone = StringField('Ваш мобильный телефон в формате 87771234567',validators=[DataRequired(), Length(min=11,max=11)])
+    question = TextAreaField('Ваш вопрос',validators=[Length(min=3,max=1000)])
+    submit = SubmitField('Задать вопрос')
+
+    def validate_phone(self,phone):
+        try:
+            p = int(phone.data)
+        except:
+            raise ValidationError('Номер мобильного телефона должен содержать только цифры, например 87771234567')        
+        if len(phone.data) != 11:
+            raise ValidationError('Введите номер в формате 87771234567')
+   

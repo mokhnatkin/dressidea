@@ -1,12 +1,12 @@
 ﻿from app import app, db
 from flask import render_template, flash, redirect, url_for, request, g, send_file, send_from_directory
 from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
-                        Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
-                        ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
-                        PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
-                        ConfirmGroupVisitAmountForm, EidtVisitAmountForm
+                    Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
+                    ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
+                    PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
+                    ConfirmGroupVisitAmountForm, EditVisitAmountForm, QuestionForm
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
-                        Client, Visit, Booking, Video, VideoCategory, Promo
+                        Client, Visit, Booking, Video, VideoCategory, Promo, QuestionFromSite
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
@@ -17,6 +17,9 @@ import os
 from functools import wraps
 from sqlalchemy import func
 import cyrtranslit
+from flask_mail import Message
+from app import mail
+from threading import Thread
 
 
 @app.before_request
@@ -964,10 +967,10 @@ def delete_visit(visit_id = None):
 @login_required
 @required_roles('admin')
 def edit_visit(visit_id = None):
-    form = EidtVisitAmountForm()
+    form = EditVisitAmountForm()
     visit = Visit.query.filter(Visit.id == visit_id).first()
     if request.method == 'GET':
-        form = EidtVisitAmountForm(obj=visit)
+        form = EditVisitAmountForm(obj=visit)
     if form.validate_on_submit():
         if form.promo_id.data != 'not_set':
             visit.promo_id = form.promo_id.data
@@ -1244,3 +1247,73 @@ def promo_list():
     promos = Promo.query.all()
     return render_template('promo_list.html',title=title, \
                     promos=promos,get_promo_type_name=get_promo_type_name)
+
+
+@app.route('/ask_question',methods=['GET','POST'])#задать вопрос
+def ask_question():
+    title = 'Задать вопрос'
+    form = QuestionForm()
+    if form.validate_on_submit():
+        q_name = form.name.data
+        q_phone = form.phone.data
+        q_question = form.question.data
+        q = QuestionFromSite(name=q_name,phone=q_phone,question=q_question)
+        try:
+            db.session.add(q)
+            db.session.commit()
+            try:
+                get_q_from_DB = QuestionFromSite.query \
+                    .filter(QuestionFromSite.name == q_name) \
+                    .filter(QuestionFromSite.phone == q_phone) \
+                    .filter(QuestionFromSite.question == q_question) \
+                    .first()
+                _id = str(get_q_from_DB.id)
+                _timestamp = get_q_from_DB.timestamp
+            except:
+                pass
+            send_email('Новый вопрос с dressidea.kz',
+                        sender=app.config['SENDER_EMAIL'],
+                        recipients=[app.config['ADMIN_EMAIL']],
+                        text_body=render_template('email/new_question.txt',
+                                                    _id=_id,q_name=q_name,q_phone=q_phone,q_question=q_question,_timestamp=_timestamp),
+                        html_body=render_template('email/new_question.html',
+                                                    _id=_id,q_name=q_name,q_phone=q_phone,q_question=q_question,_timestamp=_timestamp))
+            if _id:
+                flash('Спасибо, мы получили Ваш вопрос и свяжемся с Вами в ближайшее время! Номер вопроса: '+_id)
+            else:
+                flash('Спасибо, мы получили Ваш вопрос и свяжемся с Вами в ближайшее время!')
+        except:
+            flash('Вопрос не может быть задан из-за технических неполадок. Пожалуйста, попробуйте чуть позже.')
+            return redirect(url_for('ask_question'))
+        return redirect(url_for('ask_question'))
+    return render_template('ask_question.html',title=title,form=form)
+
+
+@app.route('/all_questions')#список вопросов
+@login_required
+def all_questions():
+    title = 'Список вопросов с сайта'
+    questions = QuestionFromSite.query \
+                .order_by(QuestionFromSite.timestamp.desc()).all()
+    return render_template('all_questions.html',title=title,questions=questions)
+
+
+@app.route('/question/<q_id>')#просмотр вопроса с сайта
+@login_required
+def question(q_id):
+    title = 'Вопрос ' + str(q_id)
+    question = QuestionFromSite.query \
+                .filter(QuestionFromSite.id == int(q_id)).first()
+    return render_template('question.html',title=title,question=question)
+
+
+def send_email(subject,sender,recipients,text_body,html_body):#отправка email
+    msg = Message(subject,sender=sender,recipients=recipients)
+    msg.body = text_body
+    msg.html = html_body
+    Thread(target=send_async_email,args=(app,msg)).start()
+    
+
+def send_async_email(app,msg):#async mail
+    with app.app_context():
+        mail.send(msg)
