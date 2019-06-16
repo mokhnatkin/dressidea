@@ -1253,6 +1253,8 @@ def promo_list():
 def ask_question():
     title = 'Задать вопрос'
     form = QuestionForm()
+    meta_description = 'Алматы, швейный коворкинг, Dressidea, задать вопрос'
+    meta_keywords = 'Швейный коворкинг, швейная техника, швейное оборудование, аренда рабочего места, Алматы, задать вопрос'
     if form.validate_on_submit():
         q_name = form.name.data
         q_phone = form.phone.data
@@ -1286,7 +1288,8 @@ def ask_question():
             flash('Вопрос не может быть задан из-за технических неполадок. Пожалуйста, попробуйте чуть позже.')
             return redirect(url_for('ask_question'))
         return redirect(url_for('ask_question'))
-    return render_template('ask_question.html',title=title,form=form)
+    return render_template('ask_question.html',title=title,form=form, \
+        meta_description=meta_description,meta_keywords=meta_keywords)
 
 
 @app.route('/all_questions')#список вопросов
