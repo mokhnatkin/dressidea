@@ -8,25 +8,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
 db = SQLAlchemy(app)
 
 
-class VideoCategory(db.Model):#категории видео
+class QuestionFromSite(db.Model):#вопрос с сайта
     id = db.Column(db.Integer,primary_key=True)
-    num = db.Column(db.Integer,unique=True, nullable=False)#номер для отображения
-    name = db.Column(db.String(200),unique=True, nullable=False)
-    active = db.Column(db.Boolean)
-    videos = db.relationship('Video',backref='v_category',lazy='dynamic')
-
-
-class Video(db.Model):#ссылки на мастер классы
-    id = db.Column(db.Integer,primary_key=True)
+    name = db.Column(db.String(50),index=True, nullable=False)
+    phone = db.Column(db.String(20),index=True, nullable=False)    
     timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
-    descr = db.Column(db.String(500),nullable=False)
-    comment = db.Column(db.String(1000),nullable=False)
-    url = db.Column(db.String(500),nullable=False)
-    active = db.Column(db.Boolean)
-    category_id = db.Column(db.Integer,db.ForeignKey('video_category.id'))
+    question = db.Column(db.String(1000))
 
 #create tables in DB
-VideoCategory.__table__.create(db.session.bind, checkfirst=True)
+QuestionFromSite.__table__.create(db.session.bind, checkfirst=True)
 #Video.__table__.create(db.session.bind, checkfirst=True)
 
 #drops tables
