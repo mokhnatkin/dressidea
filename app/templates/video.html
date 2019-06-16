@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <h1 style="font-size: 200%; COLOR: #542947;">Видео мастер-классов</h1>
+    <h1 style="font-size: 200%; COLOR: #542947;">Мастер-классы</h1>
     <div class="container">
-        {% for cat in categories %}            
+        {% if not videos_uploaded %}
+            <p>Скоро здесь будут видео и фото мастер-классы, посвященные шитью</p>
+        {% else %}
+        {% for cat in categories %}
             <h2 style="font-size: 170%; COLOR: #542947;">{{ cat.name }} </h2>
             {% for v in videos %}
                 <div class="row">
@@ -23,14 +26,14 @@
                                 </div>
                             {% else %}<!--photo album - carousel-->
                                 <div class="container" style="max-width:100%; margin: 10px;">
-                                    <div id="myCarousel" class="carousel slide" data-ride="carousel" style="max-width:{{g.const_public.ya_map_width}}px"><!-- Карусель -->
+                                    <div id="myCarousel_{{v.id}}" class="carousel slide" data-ride="carousel" style="max-width:{{g.const_public.ya_map_width}}px"><!-- Карусель -->
                                         <!-- Indicators -->
                                         <ol class="carousel-indicators">
                                             {% for i in range(len(get_photos_for_photo_albums(v.url))) %}
                                                 {% if i==0 %}
-                                                    <li data-target="#myCarousel" data-slide-to="{{i}}" class="active"></li>
+                                                    <li data-target="#myCarousel_{{v.id}}" data-slide-to="{{i}}" class="active"></li>
                                                 {% else %}
-                                                    <li data-target="#myCarousel" data-slide-to="{{i}}"></li>
+                                                    <li data-target="#myCarousel_{{v.id}}" data-slide-to="{{i}}"></li>
                                                 {% endif %}
                                             {% endfor %}
                                         </ol>
@@ -49,11 +52,11 @@
                                             {% endfor %}
                                         </div>                  
                                         <!-- Left and right controls -->
-                                        <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+                                        <a class="left carousel-control" href="#myCarousel_{{v.id}}" data-slide="prev">
                                             <span class="glyphicon glyphicon-chevron-left"></span>
                                             <span class="sr-only">Назад</span>
                                         </a>
-                                        <a class="right carousel-control" href="#myCarousel" data-slide="next">
+                                        <a class="right carousel-control" href="#myCarousel_{{v.id}}" data-slide="next">
                                             <span class="glyphicon glyphicon-chevron-right"></span>
                                             <span class="sr-only">Вперед</span>
                                         </a>
@@ -65,6 +68,7 @@
                 </div>
             {% endfor %}
         {% endfor %}
+        {% endif %}
     </div>
 {% endblock %}
 

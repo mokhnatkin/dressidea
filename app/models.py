@@ -47,8 +47,8 @@ class Const_admin(db.Model):#храним константы для адм. ча
 class Photo(db.Model):#храним в таблице имена загруженных фото
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.String(200),index=True,unique=True)
-    caption = db.Column(db.String(50))
-    descr = db.Column(db.String(100))
+    caption = db.Column(db.String(50))#100
+    descr = db.Column(db.String(100))#1000
     photo_type = db.Column(db.String(20), nullable=False)
     timestamp = db.Column(db.DateTime,default=datetime.utcnow)
     active = db.Column(db.Boolean)

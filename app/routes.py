@@ -169,7 +169,7 @@ def delete_file(fid = None):
     if photo is not None:
         if photo.active:
             flash('Нельзя удалить фото, которое отображается на сайте. Сначала его нужно скрыть.')
-            return redirect(url_for('files'))
+            return redirect(url_for('files',param='all',album_name='None'))
         else:
             try:
                 os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo.name))
@@ -178,11 +178,11 @@ def delete_file(fid = None):
                 flash('Фото удалено с сервера')                
             except:
                 flash('Не удалось выполнить физическое удаление фото с сервера. Файл не найден.')
-                return redirect(url_for('files'))
+                return redirect(url_for('files',param='all',album_name='None'))
     else:
         flash('Фото для удаления не найдено')
-        return redirect(url_for('files'))
-    return redirect(url_for('files'))
+        return redirect(url_for('files',param='all',album_name='None'))
+    return redirect(url_for('files',param='all',album_name='None'))
 
 
 @app.route('/edit_file/<fid>',methods=['GET', 'POST'])#изменить фото
@@ -201,7 +201,7 @@ def edit_file(fid = None):
         photo.descr = form.descr.data
         db.session.commit()        
         flash('Фото успешно изменено!')
-        return redirect(url_for('files'))
+        return redirect(url_for('files',param='all',album_name='None'))
     return render_template('edit_file.html', title=title,form=form,descr=descr)
 
 
@@ -281,7 +281,7 @@ def activateFile(fid = None):
         flash('Фото успешно активировано!')
     except:
         flash('Не удалось')
-    return redirect(url_for('files'))
+    return redirect(url_for('files',param='all',album_name='None'))
 
 
 @app.route('/deactivate_files/<fid>')#активировать фото для отображения на сайте
@@ -295,7 +295,7 @@ def deactivateFile(fid = None):
         flash('Деактивировано')
     except:
         flash('Не удалось')
-    return redirect(url_for('files'))
+    return redirect(url_for('files',param='all',album_name='None'))
 
 
 @app.route('/const_admin',methods=['GET', 'POST'])#константы для админки
@@ -1187,10 +1187,11 @@ def get_photos_for_photo_albums(album_name):#список фото для ото
     return photos
 
 @app.route('/video')#видео мастер-классов
-def video():#главная страница
+def video():#мастер классы
     title = 'Швейный коворкинг, город Алматы, мастер-классы'
     meta_description = 'Место для любителей шитья, город Алматы. Мастер классы'
-    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, мастер классы'
+    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, мастер классы, фото, видео'
+    videos_uploaded = False
     #все активные категории, где есть видео
     categories = VideoCategory.query.join(Video) \
                 .filter(VideoCategory.active == True) \
@@ -1201,11 +1202,16 @@ def video():#главная страница
                     .filter(Video.active == True) \
                     .order_by(VideoCategory.num) \
                     .order_by(Video.timestamp.desc()).all()
+    if len(videos) > 0:
+        videos_uploaded = True
+    else:
+        videos_uploaded = False
     return render_template('video.html',title=title, meta_description = meta_description, \
                             meta_keywords=meta_keywords, videos=videos, categories=categories, \
                             get_video_type_name=get_video_type_name, \
                             get_path_to_static_photo_albums=get_path_to_static_photo_albums,len=len,
-                            get_photos_for_photo_albums=get_photos_for_photo_albums)
+                            get_photos_for_photo_albums=get_photos_for_photo_albums, \
+                            videos_uploaded=videos_uploaded)
 
 
 promo_types = app.config['PROMO_TYPES']#типы и id промо акций
