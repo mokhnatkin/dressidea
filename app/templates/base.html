@@ -43,9 +43,10 @@
                 <ul class="nav navbar-nav navbar-left">                    
                     <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts" style="COLOR: #542947">Контакты</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('gallery') }}" style="COLOR: #542947">Фото</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('about') }}" style="COLOR: #542947">О проекте</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('pricing') }}" style="COLOR: #542947">Цены</a></li>                    
                     <li><a class="navbar-brand" href="{{ url_for('ask_question') }}" style="COLOR: #542947">Задать вопрос</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('video') }}" style="COLOR: #542947">Мастер-классы</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('about') }}" style="COLOR: #542947">О проекте</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li><a class="navbar-brand" href="{{ g.const_public.insta_url }}" style="COLOR: #542947"><i class="fab fa-instagram"></i></a></li>
@@ -145,9 +146,10 @@
                     <a href="{{ url_for('index') }}">Главная</a>
                     <a href="{{ url_for('index') }}#contacts">Контакты</a>
                     <a href="{{ url_for('gallery') }}">Фото</a>
-                    <a href="{{ url_for('about') }}">О проекте</a>
+                    <a href="{{ url_for('pricing') }}">Цены</a>
                     <a href="{{ url_for('ask_question') }}">Задать вопрос</a>
                     <a href="{{ url_for('video') }}">Мастер-классы</a>
+                    <a href="{{ url_for('about') }}">О проекте</a>
                 </footer>
             </div>
         {% endif %}

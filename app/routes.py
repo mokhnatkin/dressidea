@@ -1002,7 +1002,7 @@ def delete_booking(booking_id = None):
 
 
 @app.route('/about')#о проекте
-def about():#главная страница
+def about():#о проекте
     title = 'Швейный коворкинг, город Алматы, о проекте'
     meta_description = 'Место для любителей шитья, город Алматы. О проекте, история'
     meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, о проекте'    
@@ -1326,3 +1326,12 @@ def send_email(subject,sender,recipients,text_body,html_body):#отправка 
 def send_async_email(app,msg):#async mail
     with app.app_context():
         mail.send(msg)
+
+
+@app.route('/pricing')#цена
+def pricing():#цена
+    title = 'Швейный коворкинг, город Алматы, цена'
+    meta_description = 'Место для любителей шитья, город Алматы. Цена, стоимость.'
+    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, цена, стоимость, визит, групповой визит'    
+    return render_template('pricing.html',title=title, meta_description = meta_description, \
+                            meta_keywords=meta_keywords)
