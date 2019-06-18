@@ -526,12 +526,11 @@ def add_client():
             else:
                 try:
                     source_id = int(form.source.data)
-                    client = Client(name=name,phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)
-                    db.session.add(client)
+                    client = Client(name=name,phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)                    
                 except:
-                    client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)
-                    db.session.add(client)
-                    flash('Не получилось получить id канала. Клиент будет создан без указания канала.')            
+                    client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)                    
+                    flash('Не получилось получить id канала. Клиент будет создан без указания канала.')
+            db.session.add(client)
             db.session.commit()
             flash('Клиент добавлен. Теперь можно добавить визит или бронь.')
         else:
