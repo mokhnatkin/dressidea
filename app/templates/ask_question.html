@@ -2,8 +2,8 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    <h1 style="font-size: 200%; COLOR: #542947;">Задать вопрос</h1>
-    <p>Пожалуйста, укажите своё имя и контактный мобильный телефон.</p>
+    <h1 class="h1_public">Задать вопрос</h1>    
+        <p class="font_public">Пожалуйста, укажите своё имя и контактный мобильный телефон.</p>
     <div class="row">
         <div class="col-md-4">
             {{ wtf.quick_form(form) }}

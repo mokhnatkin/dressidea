@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <h1 style="font-size: 200%; COLOR: #542947;">Мастер-классы</h1>
+    <h1 class="h1_public">Мастер-классы</h1>
     <div class="container">
         {% if not videos_uploaded %}
             <p>Скоро здесь будут видео и фото мастер-классы, посвященные шитью</p>
         {% else %}
         {% for cat in categories %}
-            <h2 style="font-size: 170%; COLOR: #542947;">{{ cat.name }} </h2>
+            <h2 class="h2_public">{{ cat.name }} </h2>
             {% for v in videos %}
                 <div class="row">
                     <div class="col-md-4 col-sm-12 col-xs-12">
