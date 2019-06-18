@@ -72,7 +72,7 @@ def index():#главная страница
         rate = round(g.const_admin.rate)
         max_amount = round(g.const_admin.max_amount)
     except:
-        pass    
+        pass
     carousel_photos = None #фото для карусели
     carousel_photos_len = None
     show_carousel = False
@@ -318,9 +318,11 @@ def const_admin():
             const_set.rate=form.rate.data
             const_set.max_amount = form.max_amount.data
             const_set.group_rate=form.group_rate.data
+            const_set.group_max_amount=form.group_max_amount.data
             const_set.google_analytics_tracking_id = form.google_analytics_tracking_id.data
         else:
             const = Const_admin(rate=form.rate.data,group_rate=form.group_rate.data, \
+                group_max_amount=form.group_max_amount.data, \
                 max_amount=form.max_amount.data,google_analytics_tracking_id=form.google_analytics_tracking_id.data)
             db.session.add(const)
         db.session.commit()
@@ -676,6 +678,7 @@ def compute_amount_no_promo(begin,param):#рассчитать стоимост�
     elif param == 'group_by_hours':
         rate = const_admin.group_rate
     max_amount = const_admin.max_amount
+    group_max_amount = const_admin.group_max_amount
     now = datetime.utcnow()
     delta = now - begin
     days, seconds = delta.days, delta.seconds
@@ -684,6 +687,8 @@ def compute_amount_no_promo(begin,param):#рассчитать стоимост�
     amount = (amount_real // 100) * 100#округляем до 100 тг в меньшую сторону
     if param == 'standard':
         amount = min(amount, max_amount)#применяем максимальный чек
+    elif param == 'group_by_hours':
+        amount = min(amount, group_max_amount)
     return amount
 
 
@@ -1332,6 +1337,16 @@ def send_async_email(app,msg):#async mail
 def pricing():#цена
     title = 'Швейный коворкинг, город Алматы, цена'
     meta_description = 'Место для любителей шитья, город Алматы. Цена, стоимость.'
-    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, цена, стоимость, визит, групповой визит'    
+    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, цена, стоимость, визит, групповой визит'
+    rate = None
+    max_amount = None
+    try:
+        rate = round(g.const_admin.rate)
+        max_amount = round(g.const_admin.max_amount)
+        group_rate = round(g.const_admin.group_rate)
+        group_max_amount = round(g.const_admin.group_max_amount)
+    except:
+        pass    
     return render_template('pricing.html',title=title, meta_description = meta_description, \
-                            meta_keywords=meta_keywords)
+                            meta_keywords=meta_keywords, rate=rate, max_amount=max_amount, \
+                            group_rate=group_rate, group_max_amount=group_max_amount)

@@ -41,6 +41,7 @@ class Const_admin(db.Model):#храним константы для адм. ча
     rate = db.Column(db.Float)
     max_amount = db.Column(db.Float)
     group_rate = db.Column(db.Float)
+    group_max_amount = db.Column(db.Float)
     google_analytics_tracking_id = db.Column(db.String(50))
 
 
