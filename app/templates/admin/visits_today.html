@@ -4,8 +4,8 @@
 <h1>Визиты в коворкинг</h1>
 <table class="table">
     <tr class="table-active">
-        <td><a href="{{ url_for('visits_today',param='today') }}">Сегодня</a></td>
-        <td><a href="{{ url_for('visits_today',param='all') }}">Все визиты</a></td>
+        <td><a href="{{ url_for('admin.visits_today',param='today') }}">Сегодня</a></td>
+        <td><a href="{{ url_for('admin.visits_today',param='all') }}">Все визиты</a></td>
     </tr>
  </table>
 <h3>{{ descr }}</h3>
@@ -29,7 +29,7 @@
             {% for v in visits %}
                 {% if not v.end %}
                     <tr>
-                        <td><a href="{{ url_for('client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
+                        <td><a href="{{ url_for('admin.client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ time_live(v.begin,get_now()) }}</td>
@@ -39,10 +39,10 @@
                             {% endif %}
                         </td>
                         <td>{{ "{:,.0f}".format(compute_amount(v.begin,v.promo_id)) }}</td>
-                        <td><a href="{{ url_for('close_visit',visit_id=v.id) }}">Завершить</a></td>                        
+                        <td><a href="{{ url_for('admin.close_visit',visit_id=v.id) }}">Завершить</a></td>                        
                         <td>{{ v.comment }}</td>
                         {% if current_user.role == 'admin' %}                            
-                            <td><a href="{{ url_for('delete_visit',visit_id=v.id) }}">Удалить</a></td>
+                            <td><a href="{{ url_for('admin.delete_visit',visit_id=v.id) }}">Удалить</a></td>
                         {% endif %}
                     </tr>
                 {% endif %}
@@ -71,7 +71,7 @@
             {% for v in visits %}
                 {% if v.end %}
                     <tr>
-                        <td><a href="{{ url_for('client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
+                        <td><a href="{{ url_for('admin.client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ moment(v.end).format('LLL') }}</td>
@@ -82,12 +82,12 @@
                         </td>
                         <td>{{ "{:,.0f}".format(v.amount) }}</td>
                         {% if param == 'today' %}
-                            <td><a href="{{ url_for('open_closed_visit',visit_id=v.id) }}">Открыть</a></td>
+                            <td><a href="{{ url_for('admin.open_closed_visit',visit_id=v.id) }}">Открыть</a></td>
                         {% endif %}
                         <td>{{ v.comment }}</td>
                         {% if current_user.role == 'admin' %}
-                            <td><a href="{{ url_for('edit_visit',visit_id=v.id) }}">Изменить</a></td>
-                            <td><a href="{{ url_for('delete_visit',visit_id=v.id) }}">Удалить</a></td>
+                            <td><a href="{{ url_for('admin.edit_visit',visit_id=v.id) }}">Изменить</a></td>
+                            <td><a href="{{ url_for('admin.delete_visit',visit_id=v.id) }}">Удалить</a></td>
                         {% endif %}
                     </tr>
                 {% endif %}

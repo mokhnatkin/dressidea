@@ -19,7 +19,7 @@
                 {% endif %}
                 <p>Бронируйте свое рабочее время заранее.</p>
                 <p>Стоимость <b>1 часа - {{ rate }} тенге.</b></p>
-                <p>Есть тариф для групповых посещений. Подробней о ценах <a href="{{ url_for('pricing') }}">здесь</a>.</p>
+                <p>Есть тариф для групповых посещений. Подробней о ценах <a href="{{ url_for('public.pricing') }}">здесь</a>.</p>
                 <p>Предварительная запись по телефону 
                     <a href="tel:{{ g.const_public.phone }}">{{ g.const_public.phone }}</a>. Звоните!
                 </p>
@@ -29,7 +29,7 @@
         <div class="col-md-6 col-sm-12 col-xs-12">
             <p></p><p></p><p></p>
             <div class="container" style="max-width:{{g.const_public.ya_map_width}}px">
-                <img style="max-width:100%" src="{{ url_for('get_path_to_static',fname='full_logo.png') }}" alt="Швейный коворкинг Алматы"><!-- Большое лого -->
+                <img style="max-width:100%" src="{{ url_for('public.get_path_to_static',fname='full_logo.png') }}" alt="Швейный коворкинг Алматы"><!-- Большое лого -->
             </div>
             <p></p><p></p><p></p>
             {% if show_carousel %}
@@ -50,11 +50,11 @@
                         {% for i in range(carousel_photos_len) %}
                             {% if i==0 %}
                                 <div class="item active">
-                                    <img src="{{ url_for('get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
+                                    <img src="{{ url_for('public.get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
                                 </div>
                             {% else %}                  
                                 <div class="item">
-                                    <img src="{{ url_for('get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
+                                    <img src="{{ url_for('public.get_path_to_static',fname=carousel_photos[i].name) }}" alt="Швейный коворкинг Алматы">
                                 </div>
                             {% endif %}
                         {% endfor %}
@@ -132,7 +132,7 @@
                     Подробные правила посещения и правила техники безопасности можно почитать здесь:
                 </p>
                 <p>
-                    <a href="{{ url_for('downloadFile',ftype='None',album_name='None',fname='rules.pdf') }}"><i class="fas fa-file-pdf"></i>&nbsp; Правила посещения и техника безопасности</a>
+                    <a href="{{ url_for('public.downloadFile',ftype='None',album_name='None',fname='rules.pdf') }}"><i class="fas fa-file-pdf"></i>&nbsp; Правила посещения и техника безопасности</a>
                 </p>
             </div>
         </div>
@@ -143,7 +143,7 @@
             <h1 class="h1_public">Задать вопрос</h1>
             <div class="font_public">
                 <p>
-                    Остались вопросы? Вы можете задать вопрос <a href="{{ url_for('ask_question') }}">здесь</a>.
+                    Остались вопросы? Вы можете задать вопрос <a href="{{ url_for('public.ask_question') }}">здесь</a>.
                 </p>
             </div>
         </div>

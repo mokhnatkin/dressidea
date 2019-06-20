@@ -2,10 +2,10 @@
 
 {% block app_content %}
 <h1>Список загруженных фото</h1>
-<a href="{{ url_for('files',param='all',album_name='None') }}" class="btn btn-info" role="button">Все фото</a>
-<a href="{{ url_for('files',param='carousel',album_name='None') }}" class="btn btn-info" role="button">Карусель</a>
-<a href="{{ url_for('files',param='gallery',album_name='None') }}" class="btn btn-info" role="button">Галлерея</a>
-<a href="{{ url_for('files',param='photoalbum',album_name='None_album_selected') }}" class="btn btn-info" role="button">Фотоальбомы</a>
+<a href="{{ url_for('admin.files',param='all',album_name='None') }}" class="btn btn-info" role="button">Все фото</a>
+<a href="{{ url_for('admin.files',param='carousel',album_name='None') }}" class="btn btn-info" role="button">Карусель</a>
+<a href="{{ url_for('admin.files',param='gallery',album_name='None') }}" class="btn btn-info" role="button">Галлерея</a>
+<a href="{{ url_for('admin.files',param='photoalbum',album_name='None_album_selected') }}" class="btn btn-info" role="button">Фотоальбомы</a>
 <br>
 <div>
     <div class="table-responsive">
@@ -26,9 +26,9 @@
             <tr>
                 <td>
                     {% if f.photoalbum %}
-                        <a href="{{ url_for('downloadFile',ftype=f.photo_type,album_name=f.photoalbum,fname=f.name) }}">{{ f.name }}</a>
+                        <a href="{{ url_for('admin.downloadFile',ftype=f.photo_type,album_name=f.photoalbum,fname=f.name) }}">{{ f.name }}</a>
                     {% else %}
-                        <a href="{{ url_for('downloadFile',ftype=f.photo_type,album_name='None',fname=f.name) }}">{{ f.name }}</a>
+                        <a href="{{ url_for('admin.downloadFile',ftype=f.photo_type,album_name='None',fname=f.name) }}">{{ f.name }}</a>
                     {% endif %}
                 </td>
                 <td>{{ f.photo_type }}</td>
@@ -57,17 +57,17 @@
                 </td>            
                 <td>
                     {% if f.active %}
-                        <a href="{{ url_for('deactivateFile',fid=f.id) }}">Скрыть</a>
+                        <a href="{{ url_for('admin.deactivateFile',fid=f.id) }}">Скрыть</a>
                     {% else %}
-                        <a href="{{ url_for('activateFile',fid=f.id) }}">Показать</a>
+                        <a href="{{ url_for('admin.activateFile',fid=f.id) }}">Показать</a>
                     {% endif %}                
                 </td>
                 <td>
-                    <a href="{{ url_for('edit_file',fid=f.id) }}">Изменить описание</a>                    
+                    <a href="{{ url_for('admin.edit_file',fid=f.id) }}">Изменить описание</a>                    
                 </td>
                 <td>
                     {% if not f.active %}
-                        <a href="{{ url_for('delete_file',fid=f.id) }}">Удалить файл</a>
+                        <a href="{{ url_for('admin.delete_file',fid=f.id) }}">Удалить файл</a>
                     {% endif %}
                 </td>
             </tr>

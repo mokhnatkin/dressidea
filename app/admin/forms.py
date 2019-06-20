@@ -1,43 +1,19 @@
 from flask_wtf import FlaskForm
+from flask import current_app
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
                 TextAreaField, SelectField, DecimalField, IntegerField, \
                 DateTimeField, MultipleFileField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from app.models import User, ClientSource, VideoCategory, Promo
-from wtforms.fields.html5 import DateField
-from wtforms.fields.html5 import TimeField
-from app import app
+from wtforms.fields.html5 import DateField, TimeField
 
-
-class LoginForm(FlaskForm):#вход
-    username = StringField('Логин',validators=[DataRequired()])
-    password = PasswordField('Пароль',validators=[DataRequired()])
-    remember_me = BooleanField('Запомни меня')
-    submit = SubmitField('Вход')
-
-
-class RegistrationForm(FlaskForm):#зарегистрироваться
-    username = StringField('Логин',validators=[DataRequired()])
-    email = StringField('E-mail',validators=[DataRequired(), Email()])
-    password = PasswordField('Пароль',validators=[DataRequired()])
-    password2 = PasswordField('Повторите пароль',validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Добавить')
-
-    def validate_username(self,username):
-        user = User.query.filter_by(username=username.data).first()
-        if user is not None:
-            raise ValidationError('Пользователь с таким логином уже зарегистрирован.')
-
-    def validate_email(self,email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError('Пользователь с таким e-mail адресом уже зарегистрирован.')
 
 
 class PhotoUploadForm(FlaskForm):#загрузить фото
-    photo_types = app.config['PHOTO_TYPES']
-    photo = FileField(label='Выберите фото для загрузки',validators=[FileRequired(),FileAllowed(app.config['EXT_FOR_PHOTOS'], 'Только изображение!')])    
+    photo_types = current_app.config['PHOTO_TYPES']
+    ext_for_photos = current_app.config['EXT_FOR_PHOTOS']
+    photo = FileField(label='Выберите фото для загрузки',validators=[FileRequired(),FileAllowed(ext_for_photos, 'Только изображение!')])    
     photo_type = SelectField(label='Куда загрузить фото',choices = photo_types)
     caption = StringField('Заголовок')
     descr = StringField('Описание')
@@ -46,7 +22,7 @@ class PhotoUploadForm(FlaskForm):#загрузить фото
 
 
 class PhotoEditForm(FlaskForm):#редактировать фото    
-    photo_types = app.config['PHOTO_TYPES']
+    photo_types = current_app.config['PHOTO_TYPES']
     photo_type = SelectField(label='Куда загрузить фото',choices = photo_types)
     caption = StringField('Заголовок')
     descr = StringField('Описание')    
@@ -91,7 +67,7 @@ class ClientSourceForm(FlaskForm):#добавить / изменить исто�
 
 
 class VideoForm(FlaskForm):#добавить видео мастер класса    
-    v_types = app.config['V_TYPES_STR']
+    v_types = current_app.config['V_TYPES_STR']
     v_type = SelectField('Выберите вид мастер-класса',choices = v_types,validators=[DataRequired()])
     category = SelectField('Выберите категорию',choices = [],validators=[DataRequired()])    
     url = StringField('Если видео: последняя часть ссылки на видео; например, если ссылка https://www.youtube.com/watch?v=Yai9fmGJTaQ, то в этом поле нужно указать Yai9fmGJTaQ; если фото: название альбома для системы', \
@@ -181,7 +157,7 @@ class PeriodInputForm(FlaskForm):#указать период для стати�
 
 
 class PromoForm(FlaskForm):#добавить промо акции
-    promo_types = app.config['PROMO_TYPES_STR']
+    promo_types = current_app.config['PROMO_TYPES_STR']
     name = StringField('Название акции',validators=[DataRequired(), Length(min=1,max=100)])
     promo_type = SelectField('Тип акции',choices = promo_types)
     value = DecimalField('Значение (тг. или %)',validators=[DataRequired()])
@@ -208,17 +184,4 @@ class EditVisitAmountForm(FlaskForm):#изменить стоимость виз
         self.promo_id.choices = promos
     
 
-class QuestionForm(FlaskForm):#задать вопрос на сайте
-    name = StringField('Ваше имя',validators=[DataRequired(), Length(min=1,max=50)])
-    phone = StringField('Ваш мобильный телефон в формате 87771234567',validators=[DataRequired(), Length(min=11,max=11)])
-    question = TextAreaField('Ваш вопрос',validators=[Length(min=3,max=1000)])
-    submit = SubmitField('Задать вопрос')
-
-    def validate_phone(self,phone):
-        try:
-            p = int(phone.data)
-        except:
-            raise ValidationError('Номер мобильного телефона должен содержать только цифры, например 87771234567')        
-        if len(phone.data) != 11:
-            raise ValidationError('Введите номер в формате 87771234567')
    

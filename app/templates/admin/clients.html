@@ -25,7 +25,7 @@
             {% if not client_found %}
                 {% for c in clients %}
                     <tr>
-                        <td><a href="{{ url_for('client_info',client_id=c.id) }}">{{ c.name }}</a></td>
+                        <td><a href="{{ url_for('admin.client_info',client_id=c.id) }}">{{ c.name }}</a></td>
                         <td>{{ c.phone }}</td>
                         <td>{{ c.insta }}</td>
                         <td>
@@ -36,13 +36,13 @@
                         <td>{{ moment(c.timestamp).format('LLL') }}</td>
                         <td>{{ c.comment }}</td>
                         <td>
-                            <a href="{{ url_for('change_client_info',client_id=c.id) }}">Изменить</a>
+                            <a href="{{ url_for('admin.change_client_info',client_id=c.id) }}">Изменить</a>
                         </td>
                     </tr>
                 {% endfor %}            
             {% else %}
                 <tr>
-                    <td><a href="{{ url_for('client_info',client_id=client_by_phone.id) }}">{{ client_by_phone.name }}</a></td>
+                    <td><a href="{{ url_for('admin.client_info',client_id=client_by_phone.id) }}">{{ client_by_phone.name }}</a></td>
                     <td>{{ client_by_phone.phone }}</td>
                     <td>{{ client_by_phone.insta }}</td>
                     <td>
@@ -53,7 +53,7 @@
                     <td>{{ moment(client_by_phone.timestamp).format('LLL') }}</td>
                     <td>{{ client_by_phone.comment }}</td>
                     <td>
-                        <a href="{{ url_for('change_client_info',client_id=client_by_phone.id) }}">Изменить</a>
+                        <a href="{{ url_for('admin.change_client_info',client_id=client_by_phone.id) }}">Изменить</a>
                     </td>
                 </tr>            
             {% endif %}

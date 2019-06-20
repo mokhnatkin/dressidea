@@ -16,14 +16,14 @@
             {% else %}Швейная мастерская - коворкинг, Алматы
             {% endif %}
     </title>
-    <link rel="icon" href="{{ url_for('get_path_to_static',fname='favicon.ico') }}">
+    <link rel="icon" href="{{ url_for('public.get_path_to_static',fname='favicon.ico') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     
     {% block styles %}<!--custom css-->
     {{super()}}
-        <link rel="stylesheet" href="{{ url_for('get_path_to_static',fname='mystyle.css') }}">
+        <link rel="stylesheet" href="{{ url_for('public.get_path_to_static',fname='mystyle.css') }}">
     {% endblock %}
 
     {% if current_user.is_anonymous %}
@@ -43,16 +43,16 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a href="{{ url_for('index') }}" class="navbar-left"><img style="max-width:150px; margin-right: 10px;" src="{{ url_for('get_path_to_static',fname='logo.jpg') }}" alt="Швейный коворкинг"></a>
+                    <a href="{{ url_for('public.index') }}" class="navbar-left"><img style="max-width:150px; margin-right: 10px;" src="{{ url_for('public.get_path_to_static',fname='logo.jpg') }}" alt="Швейный коворкинг"></a>
                 </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-left">                    
-                    <li><a class="navbar-brand" href="{{ url_for('index') }}#contacts" style="COLOR: #542947">Контакты</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('gallery') }}" style="COLOR: #542947">Фото</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('pricing') }}" style="COLOR: #542947">Цены</a></li>                    
-                    <li><a class="navbar-brand" href="{{ url_for('ask_question') }}" style="COLOR: #542947">Задать вопрос</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('video') }}" style="COLOR: #542947">Мастер-классы</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('about') }}" style="COLOR: #542947">О проекте</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('public.index') }}#contacts" style="COLOR: #542947">Контакты</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('public.gallery') }}" style="COLOR: #542947">Фото</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('public.pricing') }}" style="COLOR: #542947">Цены</a></li>                    
+                    <li><a class="navbar-brand" href="{{ url_for('public.ask_question') }}" style="COLOR: #542947">Задать вопрос</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('public.video') }}" style="COLOR: #542947">Мастер-классы</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('public.about') }}" style="COLOR: #542947">О проекте</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li><a class="navbar-brand" href="{{ g.const_public.insta_url }}" style="COLOR: #542947"><i class="fab fa-instagram"></i></a></li>
@@ -70,19 +70,19 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a href="{{ url_for('index') }}" class="navbar-left"><img style="max-width:150px; margin-right: 10px;" src="{{ url_for('get_path_to_static',fname='logo.jpg') }}" alt="Швейный коворкинг"></a>
+                    <a href="{{ url_for('public.index') }}" class="navbar-left"><img style="max-width:150px; margin-right: 10px;" src="{{ url_for('admin.get_path_to_static',fname='logo.jpg') }}" alt="Швейный коворкинг"></a>
                 </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-left">
-                    <li><a class="navbar-brand" href="{{ url_for('visits_today',param='today') }}">LIVE</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('add_client') }}">+ клиента</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('add_visit_booking') }}">+ визит / бронь</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('all_bookings',param='today') }}">Брони</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('clients') }}">Клиенты</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('stat') }}">Статистика</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('add_video') }}">+ мастер-класс</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('video_list') }}">Мастер-классы</a></li>
-                    <li><a class="navbar-brand" href="{{ url_for('all_questions') }}">Вопросы</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.visits_today',param='today') }}">LIVE</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.add_client') }}">+ клиента</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.add_visit_booking') }}">+ визит / бронь</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.all_bookings',param='today') }}">Брони</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.clients') }}">Клиенты</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.stat') }}">Статистика</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.add_video') }}">+ мастер-класс</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.video_list') }}">Мастер-классы</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.all_questions') }}">Вопросы</a></li>
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -90,8 +90,8 @@
                         </button>
                         <div class="dropdown-menu">
                             <ul class="nav navbar-nav">
-                                <li><a href="{{ url_for('upload_file') }}">Загрузить фото</a></li>
-                                <li><a href="{{ url_for('files',param='all',album_name='None') }}">Список фото</a></li>
+                                <li><a href="{{ url_for('admin.upload_file') }}">Загрузить фото</a></li>
+                                <li><a href="{{ url_for('admin.files',param='all',album_name='None') }}">Список фото</a></li>
                             </ul>
                         </div>
                     </div>
@@ -101,8 +101,8 @@
                         </button>
                         <div class="dropdown-menu">
                             <ul class="nav navbar-nav">
-                                <li><a href="{{ url_for('register') }}">Добавить пользователя</a></li>
-                                <li><a href="{{ url_for('users') }}">Список пользователей</a></li>
+                                <li><a href="{{ url_for('auth.register') }}">Добавить пользователя</a></li>
+                                <li><a href="{{ url_for('admin.users') }}">Список пользователей</a></li>
                             </ul>
                         </div>
                     </div>
@@ -112,19 +112,19 @@
                             </button>
                             <div class="dropdown-menu">
                                 <ul class="nav navbar-nav">
-                                    <li><a href="{{ url_for('const_public') }}">Константы сайта</a></li>
-                                    <li><a href="{{ url_for('const_admin') }}">Константы админки</a></li>
-                                    <li><a href="{{ url_for('item_inside') }}">Список оборудования</a></li>
-                                    <li><a href="{{ url_for('sources') }}">Источники клиентов</a></li>
-                                    <li><a href="{{ url_for('video_category') }}">Категории мастер-классов</a></li>
-                                    <li><a href="{{ url_for('promo_list') }}">Промоакции</a></li>
+                                    <li><a href="{{ url_for('admin.const_public') }}">Константы сайта</a></li>
+                                    <li><a href="{{ url_for('admin.const_admin') }}">Константы админки</a></li>
+                                    <li><a href="{{ url_for('admin.item_inside') }}">Список оборудования</a></li>
+                                    <li><a href="{{ url_for('admin.sources') }}">Источники клиентов</a></li>
+                                    <li><a href="{{ url_for('admin.video_category') }}">Категории мастер-классов</a></li>
+                                    <li><a href="{{ url_for('admin.promo_list') }}">Промоакции</a></li>
                                 </ul>
                             </div>
                         </div>                        
                     {% endif %}<!--конец блока меню для администратора-->
                 </ul>
                 <ul class="nav navbar-nav navbar-right">                    
-                    <li><a class="navbar-brand" href="{{ url_for('logout') }}">Выход ({{ current_user.username }})</a></li>                        
+                    <li><a class="navbar-brand" href="{{ url_for('auth.logout') }}">Выход ({{ current_user.username }})</a></li>                        
                 </ul>
             </div>
         </nav>
@@ -149,13 +149,13 @@
             <div class="container">
                 <footer style="COLOR: #542947">
                     &copy; 2019 Швейный коворкинг DressIdea, Алматы
-                    <a href="{{ url_for('index') }}">Главная</a>
-                    <a href="{{ url_for('index') }}#contacts">Контакты</a>
-                    <a href="{{ url_for('gallery') }}">Фото</a>
-                    <a href="{{ url_for('pricing') }}">Цены</a>
-                    <a href="{{ url_for('ask_question') }}">Задать вопрос</a>
-                    <a href="{{ url_for('video') }}">Мастер-классы</a>
-                    <a href="{{ url_for('about') }}">О проекте</a>
+                    <a href="{{ url_for('public.index') }}">Главная</a>
+                    <a href="{{ url_for('public.index') }}#contacts">Контакты</a>
+                    <a href="{{ url_for('public.gallery') }}">Фото</a>
+                    <a href="{{ url_for('public.pricing') }}">Цены</a>
+                    <a href="{{ url_for('public.ask_question') }}">Задать вопрос</a>
+                    <a href="{{ url_for('public.video') }}">Мастер-классы</a>
+                    <a href="{{ url_for('public.about') }}">О проекте</a>
                 </footer>
             </div>
         {% endif %}

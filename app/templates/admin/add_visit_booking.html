@@ -26,8 +26,8 @@
                 <tr>                        
                     <td>{{ client_by_phone.name }}</td>
                     <td>{{ client_by_phone.phone }}</td>
-                    <td><a href="{{ url_for('add_visit_for_client',client_id=client_by_phone.id) }}" class="btn btn-success" role="button">Добавить визит</a></td>
-                    <td><a href="{{ url_for('add_booking_for_client',client_id=client_by_phone.id) }}" class="btn btn-info" role="button">Добавить бронь</a></td>
+                    <td><a href="{{ url_for('admin.add_visit_for_client',client_id=client_by_phone.id) }}" class="btn btn-success" role="button">Добавить визит</a></td>
+                    <td><a href="{{ url_for('admin.add_booking_for_client',client_id=client_by_phone.id) }}" class="btn btn-info" role="button">Добавить бронь</a></td>
                 </tr>
             </table>
         </div>
@@ -44,8 +44,8 @@
                     <tr>
                         <td>{{ c.name }}</td>
                         <td>{{ c.phone }}</td>
-                        <td><a href="{{ url_for('add_visit_for_client',client_id=c.id) }}" class="btn btn-success" role="button">Добавить визит</a></td>
-                        <td><a href="{{ url_for('add_booking_for_client',client_id=c.id) }}" class="btn btn-info" role="button">Добавить бронь</a></td>
+                        <td><a href="{{ url_for('admin.add_visit_for_client',client_id=c.id) }}" class="btn btn-success" role="button">Добавить визит</a></td>
+                        <td><a href="{{ url_for('admin.add_booking_for_client',client_id=c.id) }}" class="btn btn-info" role="button">Добавить бронь</a></td>
                     </tr>
                     {% endfor %}                
             </table>

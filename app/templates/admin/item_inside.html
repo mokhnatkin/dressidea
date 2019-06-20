@@ -30,7 +30,7 @@
                         Нет
                     {% endif %}                
                 </td>
-                <td><a href="{{ url_for('edit_item_inside',item_id=i.id) }}">Изменить</a></td>
+                <td><a href="{{ url_for('admin.edit_item_inside',item_id=i.id) }}">Изменить</a></td>
             </tr>
             {% endfor %}
         </table>

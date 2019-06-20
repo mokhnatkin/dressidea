@@ -18,9 +18,9 @@
                 <td>{{ u.role }}</td>
                 <td>
                     {% if u.role == 'admin' %}
-                        <a href="{{ url_for('give_user_role',uid=u.id) }}">Разжаловать в обычные пользователи</a>
+                        <a href="{{ url_for('admin.give_user_role',uid=u.id) }}">Разжаловать в обычные пользователи</a>
                     {% else %}
-                        <a href="{{ url_for('give_admin_role',uid=u.id) }}">Сделать админом</a>
+                        <a href="{{ url_for('admin.give_admin_role',uid=u.id) }}">Сделать админом</a>
                     {% endif %}                
                 </td>
             </tr>

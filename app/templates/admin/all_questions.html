@@ -14,7 +14,7 @@
             </tr>
                 {% for q in questions %}
                     <tr>
-                        <td><a href="{{ url_for('question',q_id=q.id) }}">{{ q.id }}</a></td>
+                        <td><a href="{{ url_for('admin.question',q_id=q.id) }}">{{ q.id }}</a></td>
                         <td>{{ q.name }}</td>
                         <td>{{ q.phone }}</td>
                         <td>{{ moment(q.timestamp).format('LLL') }}</td>

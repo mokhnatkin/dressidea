@@ -18,7 +18,7 @@
             </tr>            
                 {% for v in videos %}
                     <tr>
-                        <td><a href="{{ url_for('video_per_category',cat_id=v.category_id) }}">{{ show_video_cat_name(v.category_id) }}</a></td>
+                        <td><a href="{{ url_for('admin.video_per_category',cat_id=v.category_id) }}">{{ show_video_cat_name(v.category_id) }}</a></td>
                         <td>{{ get_video_type_name(v.v_type) }}</td>
                         <td>{{ v.descr }}</td>
                         <td>{{ v.comment }}</td>
@@ -26,7 +26,7 @@
                             {% if get_video_type_name(v.v_type)=='video' %}
                                 <a href="https://www.youtube.com/watch?v={{ v.url }}">{{ v.url }}</a>
                             {% else %}
-                                <a href="{{ url_for('files',param='photoalbum',album_name=v.url) }}">{{ v.url }}</a>                                
+                                <a href="{{ url_for('admin.files',param='photoalbum',album_name=v.url) }}">{{ v.url }}</a>                                
                             {% endif %}
                         </td>
                         <td>
@@ -38,7 +38,7 @@
                         </td>
                         <td>{{ moment(v.timestamp).format('LLL') }}</td>                        
                         <td>
-                            <a href="{{ url_for('edit_video',video_id=v.id) }}">Изменить</a>
+                            <a href="{{ url_for('admin.edit_video',video_id=v.id) }}">Изменить</a>
                         </td>
                     </tr>
                 {% endfor %}            

@@ -1,136 +1,35 @@
-﻿from app import app, db
-from flask import render_template, flash, redirect, url_for, request, g, send_file, send_from_directory
-from app.forms import LoginForm, RegistrationForm, PhotoUploadForm, Const_adminForm, \
+from app import db
+from flask import render_template, flash, redirect, url_for, request, g, \
+                    send_file, send_from_directory, current_app
+from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
+                        Client, Visit, Booking, Video, VideoCategory, Promo, QuestionFromSite                    
+from app.admin.forms import PhotoUploadForm, Const_adminForm, \
                     Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
                     ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
                     PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
-                    ConfirmGroupVisitAmountForm, EditVisitAmountForm, QuestionForm
-from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
-                        Client, Visit, Booking, Video, VideoCategory, Promo, QuestionFromSite
-from flask_login import current_user, login_user, logout_user, login_required
+                    ConfirmGroupVisitAmountForm, EditVisitAmountForm
+from flask_login import current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from flask_babel import get_locale
 import os
 from functools import wraps
 from sqlalchemy import func
 import cyrtranslit
-from flask_mail import Message
-from app import mail
-from threading import Thread
+from app.admin import bp
+from app.universal_routes import before_request_u, downloadFile_u, get_path_to_static_u, \
+                    get_path_to_static_photo_albums_u, get_photos_for_photo_albums_u, \
+                    get_video_type_name_u, required_roles_u
 
 
-@app.before_request
+@bp.before_request
 def before_request():
-    g.locale = str(get_locale())
-    const_public = None
-    const_admin = None
-    try:
-        const_public = Const_public.query.first()
-        const_admin = Const_admin.query.first()
-    except:
-        pass
-    g.const_public = const_public
-    g.const_admin = const_admin
-    debug_flag = os.environ.get('FLASK_DEBUG')
-    if debug_flag == '1':
-        g.debug_flag = True #признак - находится ли приложение в отладке
-    else:
-        g.debug_flag = False
-    g.now_moment = datetime.utcnow()
-    
+    return before_request_u()
 
-#A function defintion which will work as a decorator for each view – we can call this with @required_roles
+
 def required_roles(*roles):
-    def wrapper(f):
-        @wraps(f)
-        def wrapped(*args, **kwargs):
-            if get_current_user_role() not in roles:
-                flash('У вашей роли недостаточно полномочий','error')
-                return redirect(url_for('index'))
-            return f(*args, **kwargs)
-        return wrapped
-    return wrapper
- 
-
-def get_current_user_role():#возвращает роль текущего пользователя
-    return current_user.role
-    
-
-@app.route('/')
-@app.route('/index')
-def index():#главная страница
-    title = 'Швейный коворкинг, город Алматы'
-    meta_description = 'Место для любителей шитья, город Алматы. Всё швейное оборудование в наличии. Оплата по времени.'
-    meta_keywords = 'Швейный коворкинг, швейная техника, швейное оборудование, аренда рабочего места, Алматы'
-    items = ItemInside.query.filter(ItemInside.active==True).order_by(ItemInside.num).all()
-    rate = None
-    max_amount = None
-    try:
-        rate = round(g.const_admin.rate)
-        max_amount = round(g.const_admin.max_amount)
-    except:
-        pass
-    carousel_photos = None #фото для карусели
-    carousel_photos_len = None
-    show_carousel = False
-    try:
-        carousel_photos=Photo.query.with_entities(Photo.name) \
-                            .filter(Photo.photo_type=='carousel') \
-                            .filter(Photo.active==True).all()
-        carousel_photos_len = len(carousel_photos)
-    except:
-        pass
-    if carousel_photos_len is not None and carousel_photos_len>0:
-        show_carousel = True
-    else:
-        show_carousel = False
-    return render_template('index.html',title=title, carousel_photos=carousel_photos, carousel_photos_len=carousel_photos_len, \
-                        show_carousel=show_carousel, rate = rate, max_amount = max_amount, items = items, \
-                        meta_description = meta_description, meta_keywords=meta_keywords)
-
-
-@app.route('/login',methods=['GET','POST'])#вход
-def login():
-    title = 'Вход'
-    form = LoginForm()
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))    
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
-            flash('Неправильный логин или пароль')
-            return redirect(url_for('login'))
-        login_user(user,remember=form.remember_me.data)
-        next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('const_public')
-        return redirect(next_page)
-    return render_template('login.html',title=title,form=form)
-
-
-@app.route('/logout')#выход
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
-
-
-@app.route('/register',methods=['GET','POST'])#регистрация
-@login_required
-@required_roles('admin')
-def register():
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        user = User(username=form.username.data,email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Пользователь добавлен!')
-        return redirect(url_for('login'))
-    return render_template('register.html',title='Регистрация',form=form)
+    return required_roles_u(*roles)
 
 
 def add_str_timestamp(filename):#adds string timestamp to filename in order to make in unique
@@ -141,7 +40,7 @@ def add_str_timestamp(filename):#adds string timestamp to filename in order to m
     return u_filename
 
 
-@app.route('/upload_file',methods=['GET', 'POST'])#загрузить фото
+@bp.route('/upload_file',methods=['GET', 'POST'])#загрузить фото
 @login_required
 @required_roles('admin')
 def upload_file():
@@ -152,16 +51,16 @@ def upload_file():
         f = form.photo.data        
         filename = secure_filename(f.filename)
         filename = add_str_timestamp(filename)
-        f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        f.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
         photo = Photo(name=filename,photo_type=form.photo_type.data,active=form.active.data,caption=form.caption.data,descr=form.descr.data)
         db.session.add(photo)
         db.session.commit()
         flash('Фото успешно загружено!')
-        return redirect(url_for('upload_file'))
-    return render_template('upload_file.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.upload_file'))
+    return render_template('admin/upload_file.html', title=title,form=form,descr=descr)
 
 
-@app.route('/delete_file/<fid>')#физически удалить фото
+@bp.route('/delete_file/<fid>')#физически удалить фото
 @login_required
 @required_roles('admin')
 def delete_file(fid = None):
@@ -169,23 +68,23 @@ def delete_file(fid = None):
     if photo is not None:
         if photo.active:
             flash('Нельзя удалить фото, которое отображается на сайте. Сначала его нужно скрыть.')
-            return redirect(url_for('files',param='all',album_name='None'))
+            return redirect(url_for('admin.files',param='all',album_name='None'))
         else:
             try:
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], photo.name))
+                os.remove(os.path.join(current_app.config['UPLOAD_FOLDER'], photo.name))
                 db.session.delete(photo)
                 db.session.commit()
                 flash('Фото удалено с сервера')                
             except:
                 flash('Не удалось выполнить физическое удаление фото с сервера. Файл не найден.')
-                return redirect(url_for('files',param='all',album_name='None'))
+                return redirect(url_for('admin.files',param='all',album_name='None'))
     else:
         flash('Фото для удаления не найдено')
-        return redirect(url_for('files',param='all',album_name='None'))
-    return redirect(url_for('files',param='all',album_name='None'))
+        return redirect(url_for('admin.files',param='all',album_name='None'))
+    return redirect(url_for('admin.files',param='all',album_name='None'))
 
 
-@app.route('/edit_file/<fid>',methods=['GET', 'POST'])#изменить фото
+@bp.route('/edit_file/<fid>',methods=['GET', 'POST'])#изменить фото
 @login_required
 @required_roles('admin')
 def edit_file(fid = None):
@@ -201,11 +100,11 @@ def edit_file(fid = None):
         photo.descr = form.descr.data
         db.session.commit()        
         flash('Фото успешно изменено!')
-        return redirect(url_for('files',param='all',album_name='None'))
-    return render_template('edit_file.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.files',param='all',album_name='None'))
+    return render_template('admin/edit_file.html', title=title,form=form,descr=descr)
 
 
-@app.route('/files/<param>/<album_name>')#список загруженных фото
+@bp.route('/files/<param>/<album_name>')#список загруженных фото
 @login_required
 @required_roles('admin')
 def files(param,album_name=None):
@@ -222,55 +121,25 @@ def files(param,album_name=None):
             files = Photo.query \
                 .filter(Photo.photo_type=='photoalbum') \
                 .filter(Photo.photoalbum==album_name).all()
-    return render_template('files.html',files=files)
+    return render_template('admin/files.html',files=files)
 
 
-@app.route('/gallery')#фото галлерея
-def gallery():
-    title = 'Фото швейного коворкинга Алматы'
-    meta_description = 'Фотографии швейного оборудования. Швейный коворкинг, место для любителей шитья, город Алматы.'
-    meta_keywords = 'Фото, шить, швейное оборудование, швейная мастерская, Алматы'
-    gallery_photos = None #фото для карусели
-    gallery_photos_len = None
-    show_photos = False
-    try:
-        gallery_photos=Photo.query.with_entities(Photo.name, Photo.caption, Photo.descr) \
-                            .filter(Photo.photo_type=='gallery') \
-                            .filter(Photo.active==True).all()
-        gallery_photos_len = len(gallery_photos)
-    except:
-        pass
-    if gallery_photos_len is not None and gallery_photos_len>0:
-        show_photos = True
-    else:
-        show_photos = False    
-    return render_template('gallery.html',title=title,const_public=const_public, \
-                        gallery_photos=gallery_photos,gallery_photos_len=gallery_photos_len, \
-                        show_photos=show_photos, meta_description=meta_description,meta_keywords=meta_keywords)
-
-
-@app.route('/files_download/<ftype>/<album_name>/<fname>')#файл для скачивания на комп
+@bp.route('/files_download/<ftype>/<album_name>/<fname>')#файл для скачивания на комп
 def downloadFile(ftype,fname,album_name):
-    if ftype=='photoalbum':
-        p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],app.config['PHOTO_ALBUMS_FOLDER'],album_name,fname)
-    else:
-        p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],fname)
-    return send_file(p, as_attachment=True)
+    return downloadFile_u(ftype,fname,album_name)
 
 
-@app.route('/get_path_to_static/<fname>')#путь к директории с фото, для отображения фото
-def get_path_to_static(fname = None):
-    p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],fname)
-    return send_file(p)
+@bp.route('/get_path_to_static/<fname>')#путь к директории с фото, для отображения фото
+def get_path_to_static(fname):
+    return get_path_to_static_u(fname)
 
 
-@app.route('/get_path_to_static_photo_albums/<album_name>/<fname>')#путь к директории с фото, для отображения фото (фотоальбомы)
+@bp.route('/get_path_to_static_photo_albums/<album_name>/<fname>')#путь к директории с фото, для отображения фото (фотоальбомы)
 def get_path_to_static_photo_albums(album_name,fname):
-    p = os.path.join(os.path.dirname(os.path.abspath(app.config['UPLOAD_FOLDER'])),app.config['UPLOAD_FOLDER'],app.config['PHOTO_ALBUMS_FOLDER'],album_name,fname)
-    return send_file(p)
+    return get_path_to_static_photo_albums_u(album_name,fname)
 
 
-@app.route('/activate_files/<fid>')#активировать фото для отображения на сайте
+@bp.route('/activate_files/<fid>')#активировать фото для отображения на сайте
 @login_required
 @required_roles('admin')
 def activateFile(fid = None):
@@ -281,10 +150,10 @@ def activateFile(fid = None):
         flash('Фото успешно активировано!')
     except:
         flash('Не удалось')
-    return redirect(url_for('files',param='all',album_name='None'))
+    return redirect(url_for('admin.files',param='all',album_name='None'))
 
 
-@app.route('/deactivate_files/<fid>')#активировать фото для отображения на сайте
+@bp.route('/deactivate_files/<fid>')#активировать фото для отображения на сайте
 @login_required
 @required_roles('admin')
 def deactivateFile(fid = None):
@@ -295,10 +164,10 @@ def deactivateFile(fid = None):
         flash('Деактивировано')
     except:
         flash('Не удалось')
-    return redirect(url_for('files',param='all',album_name='None'))
+    return redirect(url_for('admin.files',param='all',album_name='None'))
 
 
-@app.route('/const_admin',methods=['GET', 'POST'])#константы для админки
+@bp.route('/const_admin',methods=['GET', 'POST'])#константы для админки
 @login_required
 @required_roles('admin')
 def const_admin():
@@ -327,11 +196,11 @@ def const_admin():
             db.session.add(const)
         db.session.commit()
         flash('Значения констант изменены!')
-        return redirect(url_for('const_admin'))
-    return render_template('const_admin.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.const_admin'))
+    return render_template('admin/const_admin.html', title=title,form=form,descr=descr)
 
 
-@app.route('/const_public',methods=['GET', 'POST'])#константы для паблика
+@bp.route('/const_public',methods=['GET', 'POST'])#константы для паблика
 @login_required
 @required_roles('admin')
 def const_public():
@@ -368,20 +237,20 @@ def const_public():
             db.session.add(const)
         db.session.commit()
         flash('Значения констант изменены!')
-        return redirect(url_for('const_public'))
-    return render_template('const_public.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.const_public'))
+    return render_template('admin/const_public.html', title=title,form=form,descr=descr)
 
 
-@app.route('/users')#список пользователей
+@bp.route('/users')#список пользователей
 @login_required
 @required_roles('admin')
 def users():
     title = 'Список пользователей'
     users = User.query.all()
-    return render_template('users.html', title=title, users=users)
+    return render_template('admin/users.html', title=title, users=users)
 
 
-@app.route('/give_admin_role/<uid>')#присвоить пользователю роль admin
+@bp.route('/give_admin_role/<uid>')#присвоить пользователю роль admin
 @login_required
 @required_roles('admin')
 def give_admin_role(uid = None):
@@ -391,10 +260,10 @@ def give_admin_role(uid = None):
         db.session.commit()        
     except:
         flash('Не удалось сменить роль')
-    return redirect(url_for('users'))
+    return redirect(url_for('admin.users'))
 
 
-@app.route('/give_user_role/<uid>')#присвоить пользователю роль user
+@bp.route('/give_user_role/<uid>')#присвоить пользователю роль user
 @login_required
 @required_roles('admin')
 def give_user_role(uid = None):
@@ -404,10 +273,10 @@ def give_user_role(uid = None):
         db.session.commit()        
     except:
         flash('Не удалось сменить роль')
-    return redirect(url_for('users'))
+    return redirect(url_for('admin.users'))
 
 
-@app.route('/edit_item_inside/<item_id>',methods=['GET', 'POST'])#предменты в коворкинге (списком на главной)
+@bp.route('/edit_item_inside/<item_id>',methods=['GET', 'POST'])#предменты в коворкинге (списком на главной)
 @login_required
 @required_roles('admin')
 def edit_item_inside(item_id = None):
@@ -423,11 +292,11 @@ def edit_item_inside(item_id = None):
         item.active = form.active.data
         db.session.commit()
         flash('Значения изменены!')
-        return redirect(url_for('item_inside'))
-    return render_template('item_inside.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.item_inside'))
+    return render_template('admin/item_inside.html', title=title,form=form,descr=descr)
 
 
-@app.route('/item_inside',methods=['GET','POST'])#дополнить список оборудования
+@bp.route('/item_inside',methods=['GET','POST'])#дополнить список оборудования
 @login_required
 @required_roles('admin')
 def item_inside():
@@ -453,17 +322,17 @@ def item_inside():
             flash('Добавлено!')
         else:
             flash('Ошибка - оборудование с таким порядковым номером или названием уже есть в базе. Выберите другой номер / название!')
-        return redirect(url_for('item_inside'))
-    return render_template('item_inside.html',title=title,descr=descr,form=form,items=items)
+        return redirect(url_for('admin.item_inside'))
+    return render_template('admin/item_inside.html',title=title,descr=descr,form=form,items=items)
 
 
-@app.route('/admin')#админка - общее описание
+@bp.route('/admin')#админка - общее описание
 @login_required
 def admin():    
-    return render_template('admin.html',title='Админка')
+    return render_template('admin/admin.html',title='Админка')
 
 
-@app.route('/sources',methods=['GET','POST'])#дополнить список источников
+@bp.route('/sources',methods=['GET','POST'])#дополнить список источников
 @login_required
 @required_roles('admin')
 def sources():
@@ -484,11 +353,11 @@ def sources():
             flash('Добавлено!')
         else:
             flash('Ошибка - такой источник уже есть в базе')
-        return redirect(url_for('sources'))
-    return render_template('sources.html',title=title,descr=descr,form=form,items=items)
+        return redirect(url_for('admin.sources'))
+    return render_template('admin/sources.html',title=title,descr=descr,form=form,items=items)
 
 
-@app.route('/edit_source/<item_id>',methods=['GET', 'POST'])#редактируем источники
+@bp.route('/edit_source/<item_id>',methods=['GET', 'POST'])#редактируем источники
 @login_required
 @required_roles('admin')
 def edit_source(item_id = None):
@@ -503,11 +372,11 @@ def edit_source(item_id = None):
         item.active = form.active.data
         db.session.commit()
         flash('Значения изменены!')
-        return redirect(url_for('sources'))
-    return render_template('sources.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.sources'))
+    return render_template('admin/sources.html', title=title,form=form,descr=descr)
 
 
-@app.route('/add_client',methods=['GET','POST'])#добавить клиента
+@bp.route('/add_client',methods=['GET','POST'])#добавить клиента
 @login_required
 def add_client():
     title='Добавить клиента'
@@ -535,8 +404,8 @@ def add_client():
             flash('Клиент добавлен. Теперь можно добавить визит или бронь.')
         else:
             flash('Ошибка - клиент с таким телефоном уже есть в базе.')
-        return redirect(url_for('add_client'))
-    return render_template('add_client.html',title=title,descr=descr,form=form)
+        return redirect(url_for('admin.add_client'))
+    return render_template('admin/add_client.html',title=title,descr=descr,form=form)
 
 
 def show_source_name(source_id):#возвращает имя канала исходя из id
@@ -545,7 +414,7 @@ def show_source_name(source_id):#возвращает имя канала исх
     return name
 
 
-@app.route('/clients',methods=['GET', 'POST'])#все клиенты
+@bp.route('/clients',methods=['GET', 'POST'])#все клиенты
 @login_required
 def clients():
     title = 'Список клиентов'
@@ -563,12 +432,12 @@ def clients():
                 flash('Клиент с данным номером не найден в базе.')
         except:
             flash('Не удалось выполнить поиск.')    
-    return render_template('clients.html',title=title,descr=descr,clients=clients, \
+    return render_template('admin/clients.html',title=title,descr=descr,clients=clients, \
                     show_source_name=show_source_name,form=form,\
                     client_by_phone=client_by_phone,client_found=client_found)
 
 
-@app.route('/client_info/<client_id>')#информация по клиенту
+@bp.route('/client_info/<client_id>')#информация по клиенту
 @login_required
 def client_info(client_id=None):
     title = 'Информация по клиенту'
@@ -587,12 +456,12 @@ def client_info(client_id=None):
                         .order_by(Booking.begin).all()
     if bookings is not None and len(bookings)>0:
         show_bookings = True                        
-    return render_template('client_info.html',title=title,descr=descr,client=client,\
+    return render_template('admin/client_info.html',title=title,descr=descr,client=client,\
                             show_visits=show_visits,visits=visits,show_source_name=show_source_name, \
                             show_bookings=show_bookings,bookings=bookings,total_stat=total_stat)
 
 
-@app.route('/add_visit_booking',methods=['GET', 'POST'])#список клиентов для добавления визита или брони
+@bp.route('/add_visit_booking',methods=['GET', 'POST'])#список клиентов для добавления визита или брони
 @login_required
 def add_visit_booking():
     title='Добавить визит или бронь'
@@ -603,9 +472,9 @@ def add_visit_booking():
     page = request.args.get('page',1,type=int)
     clients = Client.query \
             .order_by(Client.timestamp.desc()) \
-            .paginate(page,app.config['PAGINATION_ITEMS_PER_PAGE'],False)
-    next_url = url_for('add_visit_booking',page=clients.next_num) if clients.has_next else None
-    prev_url = url_for('add_visit_booking',page=clients.prev_num) if clients.has_prev else None            
+            .paginate(page,current_app.config['PAGINATION_ITEMS_PER_PAGE'],False)
+    next_url = url_for('admin.add_visit_booking',page=clients.next_num) if clients.has_next else None
+    prev_url = url_for('admin.add_visit_booking',page=clients.prev_num) if clients.has_prev else None            
     if form.validate_on_submit():
         try:
             client_by_phone = Client.query.filter(Client.phone == form.phone.data).first()            
@@ -616,12 +485,12 @@ def add_visit_booking():
                 flash('Клиент с данным номером не найден в базе. Его нужно создать.')
         except:
             flash('Не удалось выполнить поиск.')
-    return render_template('add_visit_booking.html',title=title,descr=descr,clients=clients.items,\
+    return render_template('admin/add_visit_booking.html',title=title,descr=descr,clients=clients.items,\
                     form=form,client_found=client_found,client_by_phone=client_by_phone, \
                     next_url=next_url,prev_url=prev_url)
 
 
-@app.route('/add_visit/<client_id>',methods=['GET', 'POST'])#добавляем визит
+@bp.route('/add_visit/<client_id>',methods=['GET', 'POST'])#добавляем визит
 @login_required
 def add_visit_for_client(client_id = None):
     title='Добавить визит'
@@ -645,14 +514,14 @@ def add_visit_for_client(client_id = None):
             db.session.add(visit)
             db.session.commit()
             flash('Визит открыт')
-            return redirect(url_for('visits_today',param='today'))
+            return redirect(url_for('admin.visits_today',param='today'))
         else:
             flash('У клиента есть открытые визиты. Перед добавлением нового визита их необходимо закрыть.')
-            return redirect(url_for('visits_today',param='all'))
-    return render_template('add_visit_for_client.html',title=title,descr=descr,client=client,form=form)
+            return redirect(url_for('admin.visits_today',param='all'))
+    return render_template('admin/add_visit_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
-@app.route('/add_booking/<client_id>',methods=['GET', 'POST'])#добавляем бронь
+@bp.route('/add_booking/<client_id>',methods=['GET', 'POST'])#добавляем бронь
 @login_required
 def add_booking_for_client(client_id = None):
     title='Добавить бронь.'
@@ -666,8 +535,8 @@ def add_booking_for_client(client_id = None):
         booking = Booking(client_id=client_id,begin=begin,end=end,comment=form.comment.data)
         db.session.add(booking)
         db.session.commit()
-        return redirect(url_for('all_bookings',param='all'))
-    return render_template('add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
+        return redirect(url_for('admin.all_bookings',param='all'))
+    return render_template('admin/add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
 
 
 def compute_amount_no_promo(begin,param):#рассчитать стоимость визита без акций
@@ -723,9 +592,10 @@ def get_promo_name(promo_id):
     return res
 
 
-@app.route('/visits_today/<param>')#визиты
+@bp.route('/visits_today/<param>')#визиты
 @login_required
 def visits_today(param=None):
+    descr = None
     if param is None:
         param = 'today'
     title = 'Сейчас в коворкинге'    
@@ -744,28 +614,28 @@ def visits_today(param=None):
                 .filter(Visit.begin > yest_date) \
                 .filter(Visit.begin < tomor_date) \
                 .order_by(Visit.begin.desc()).all()
-    return render_template('visits_today.html',title=title,visits=visits, \
+    return render_template('admin/visits_today.html',title=title,visits=visits, \
                             time_live=time_live,compute_amount=compute_amount, \
                             get_promo_name=get_promo_name, descr=descr,param=param, \
                             get_now=datetime.utcnow)
 
 
-@app.route('/close_visit/<visit_id>')#завершить визит
+@bp.route('/close_visit/<visit_id>')#завершить визит
 @login_required
 def close_visit(visit_id=None):
     visit = Visit.query.filter(Visit.id == visit_id).first()
     if visit.promo_id:
         promo = Promo.query.filter(Promo.id == visit.promo_id).first()
         if get_promo_type_name(promo.promo_type) == 'group_visit':#подтвердить стоимость группового визита
-            return redirect(url_for('confirm_and_close_group_visit',visit_id=visit_id,amount=promo.value))
+            return redirect(url_for('admin.confirm_and_close_group_visit',visit_id=visit_id,amount=promo.value))
     amount = compute_amount(visit.begin,visit.promo_id)
     visit.amount = amount
     visit.end = datetime.utcnow()
     db.session.commit()
-    return redirect(url_for('visits_today',param='today'))
+    return redirect(url_for('admin.visits_today',param='today'))
 
 
-@app.route('/confirm_and_close_group_visit/<visit_id>/<amount>',methods=['GET', 'POST'])#подтверждаем и закрываем групповой визит
+@bp.route('/confirm_and_close_group_visit/<visit_id>/<amount>',methods=['GET', 'POST'])#подтверждаем и закрываем групповой визит
 @login_required
 def confirm_and_close_group_visit(visit_id,amount):
     title='Подтвердить и закрыть групповой визит'
@@ -777,21 +647,21 @@ def confirm_and_close_group_visit(visit_id,amount):
         visit.amount = form.amount.data
         visit.end = datetime.utcnow()
         db.session.commit()
-        return redirect(url_for('visits_today',param='today'))
-    return render_template('confirm_and_close_group_visit.html', title=title, form=form)
+        return redirect(url_for('admin.visits_today',param='today'))
+    return render_template('admin/confirm_and_close_group_visit.html', title=title, form=form)
 
 
-@app.route('/open_closed_visit/<visit_id>')#открыть завершенный по ошибке визит
+@bp.route('/open_closed_visit/<visit_id>')#открыть завершенный по ошибке визит
 @login_required
 def open_closed_visit(visit_id=None):
     visit = Visit.query.filter(Visit.id == visit_id).first()    
     visit.amount = None
     visit.end = None
     db.session.commit()
-    return redirect(url_for('visits_today',param='today'))    
+    return redirect(url_for('admin.visits_today',param='today'))    
 
 
-@app.route('/all_bookings/<param>')#брони
+@bp.route('/all_bookings/<param>')#брони
 @login_required
 def all_bookings(param=None):
     if param is None:
@@ -819,28 +689,28 @@ def all_bookings(param=None):
                     .with_entities(Client.name,Client.phone,Booking.id,Booking.client_id,Booking.begin,Booking.end,Booking.comment,Booking.attended) \
                     .filter(Booking.begin >= g.now_moment) \
                     .order_by(Booking.begin).all()
-    return render_template('all_bookings.html',title=title,bookings=bookings,descr=descr)
+    return render_template('admin/all_bookings.html',title=title,bookings=bookings,descr=descr)
 
 
-@app.route('/change_booking_status_positive/<booking_id>')#изменить статус брони - пришел
+@bp.route('/change_booking_status_positive/<booking_id>')#изменить статус брони - пришел
 @login_required
 def change_booking_status_positive(booking_id=None):
     booking = Booking.query.filter(Booking.id == booking_id).first()
     booking.attended = True
     db.session.commit()
-    return redirect(url_for('all_bookings',param='all'))
+    return redirect(url_for('admin.all_bookings',param='all'))
 
 
-@app.route('/change_booking_status_negative/<booking_id>')#изменить статус брони - не пришел
+@bp.route('/change_booking_status_negative/<booking_id>')#изменить статус брони - не пришел
 @login_required
 def change_booking_status_negative(booking_id=None):
     booking = Booking.query.filter(Booking.id == booking_id).first()
     booking.attended = False
     db.session.commit()
-    return redirect(url_for('all_bookings',param='all'))
+    return redirect(url_for('admin.all_bookings',param='all'))
 
 
-@app.route('/change_client_info/<client_id>',methods=['GET', 'POST'])#изменить данные клиента
+@bp.route('/change_client_info/<client_id>',methods=['GET', 'POST'])#изменить данные клиента
 @login_required
 def change_client_info(client_id=None):
     title = 'Изменить данные клиента'
@@ -862,11 +732,11 @@ def change_client_info(client_id=None):
         client.comment = form.comment.data
         db.session.commit()
         flash('Данные клиента изменены!')
-        return redirect(url_for('clients'))
-    return render_template('add_client.html', title=title,form=form,descr=descr,current_source=current_source)
+        return redirect(url_for('admin.clients'))
+    return render_template('admin/add_client.html', title=title,form=form,descr=descr,current_source=current_source)
 
 
-@app.route('/edit_booking/<booking_id>',methods=['GET', 'POST'])#изменить данные брони
+@bp.route('/edit_booking/<booking_id>',methods=['GET', 'POST'])#изменить данные брони
 @login_required
 def edit_booking(booking_id=None):
     title = 'Изменить данные брони'
@@ -886,14 +756,9 @@ def edit_booking(booking_id=None):
         booking.comment = form.comment.data
         db.session.commit()
         flash('Данные брони изменены!')
-        return redirect(url_for('all_bookings',param='all'))
-    return render_template('add_booking_for_client.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.all_bookings',param='all'))
+    return render_template('admin/add_booking_for_client.html', title=title,form=form,descr=descr)
 
-
-@app.route('/robots.txt')
-@app.route('/sitemap.xml')
-def static_from_root():#отдает файлы robots.txt и sitemap.xml для поисковых машин
-    return get_path_to_static(request.path[1:])
 
 def compute_stat(visits):
     count = 0
@@ -919,7 +784,7 @@ def compute_stat(visits):
     return total_stat, stat_per_day
 
 
-@app.route('/stat',methods=['GET', 'POST'])#статистика за заданный период
+@bp.route('/stat',methods=['GET', 'POST'])#статистика за заданный период
 @login_required
 def stat():
     title = 'Статистика визитов'
@@ -930,6 +795,11 @@ def stat():
     total_stat = None
     stat_per_day = None
     stat_per_day_len = None
+    today = datetime.utcnow()
+    beg_d = datetime(today.year,today.month,1)
+    end_d = today
+    form.begin_d.data = beg_d
+    form.end_d.data = end_d
     if form.validate_on_submit():
         begin_d = form.begin_d.data
         end_d = form.end_d.data  + timedelta(days=1)
@@ -944,11 +814,11 @@ def stat():
             show_stat = True
         except:
             flash('Не могу выгрузить данные для расчета статистики')
-    return render_template('stat.html',title=title,form=form,descr=descr,show_stat=show_stat,\
+    return render_template('admin/stat.html',title=title,form=form,descr=descr,show_stat=show_stat,\
                                         total_stat=total_stat,stat_per_day=stat_per_day,stat_per_day_len=stat_per_day_len)
 
 
-@app.route('/delete_visit/<visit_id>')#удалить визит
+@bp.route('/delete_visit/<visit_id>')#удалить визит
 @login_required
 @required_roles('admin')
 def delete_visit(visit_id = None):
@@ -960,14 +830,14 @@ def delete_visit(visit_id = None):
             flash('Визит удалён')                
         except:
             flash('Не удалось удалить визит.')
-            return redirect(url_for('visits_today',param='all'))
+            return redirect(url_for('admin.visits_today',param='all'))
     else:
         flash('Визит для удаления не найден. Возможно, он уже был удалён ранее.')
-        return redirect(url_for('visits_today',param='all'))
-    return redirect(url_for('visits_today',param='all'))
+        return redirect(url_for('admin.visits_today',param='all'))
+    return redirect(url_for('admin.visits_today',param='all'))
 
 
-@app.route('/edit_visit/<visit_id>',methods=['GET', 'POST'])#изменить визит
+@bp.route('/edit_visit/<visit_id>',methods=['GET', 'POST'])#изменить визит
 @login_required
 @required_roles('admin')
 def edit_visit(visit_id = None):
@@ -982,11 +852,11 @@ def edit_visit(visit_id = None):
         visit.amount = form.amount.data
         db.session.commit()        
         flash('Визит успешно изменен!')
-        return redirect(url_for('visits_today',param='all'))        
-    return render_template('edit_visit.html', form=form)
+        return redirect(url_for('admin.visits_today',param='all'))        
+    return render_template('admin/edit_visit.html', form=form)
 
 
-@app.route('/delete_booking/<booking_id>')#удалить бронь
+@bp.route('/delete_booking/<booking_id>')#удалить бронь
 @login_required
 @required_roles('admin')
 def delete_booking(booking_id = None):
@@ -998,23 +868,14 @@ def delete_booking(booking_id = None):
             flash('Бронь удалёна')                
         except:
             flash('Не удалось удалить бронь.')
-            return redirect(url_for('all_bookings',param='all'))
+            return redirect(url_for('admin.all_bookings',param='all'))
     else:
         flash('Бронь для удаления не найдена. Возможно, она уже была удалена ранее.')
-        return redirect(url_for('all_bookings',param='all'))
-    return redirect(url_for('all_bookings',param='all'))
+        return redirect(url_for('admin.all_bookings',param='all'))
+    return redirect(url_for('admin.all_bookings',param='all'))
 
 
-@app.route('/about')#о проекте
-def about():#о проекте
-    title = 'Швейный коворкинг, город Алматы, о проекте'
-    meta_description = 'Место для любителей шитья, город Алматы. О проекте, история'
-    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, о проекте'    
-    return render_template('about.html',title=title, meta_description = meta_description, \
-                            meta_keywords=meta_keywords)
-
-
-@app.route('/video_category',methods=['GET','POST'])#список категорий видео
+@bp.route('/video_category',methods=['GET','POST'])#список категорий видео
 @login_required
 @required_roles('admin')
 def video_category():
@@ -1040,11 +901,11 @@ def video_category():
             flash('Добавлено!')
         else:
             flash('Ошибка - категория с таким порядковым номером или названием уже есть в базе. Выберите другой номер / название!')
-        return redirect(url_for('video_category'))
-    return render_template('video_category.html',title=title,descr=descr,form=form,items=items)
+        return redirect(url_for('admin.video_category'))
+    return render_template('admin/video_category.html',title=title,descr=descr,form=form,items=items)
 
 
-@app.route('/edit_video_category/<item_id>',methods=['GET', 'POST'])#предменты в коворкинге (списком на главной)
+@bp.route('/edit_video_category/<item_id>',methods=['GET', 'POST'])#предменты в коворкинге (списком на главной)
 @login_required
 @required_roles('admin')
 def edit_video_category(item_id = None):
@@ -1060,11 +921,11 @@ def edit_video_category(item_id = None):
         item.active = form.active.data
         db.session.commit()
         flash('Значения изменены!')
-        return redirect(url_for('video_category'))
-    return render_template('video_category.html', title=title,form=form,descr=descr)
+        return redirect(url_for('admin.video_category'))
+    return render_template('admin/video_category.html', title=title,form=form,descr=descr)
 
 
-@app.route('/add_video',methods=['GET','POST'])#добавить видео
+@bp.route('/add_video',methods=['GET','POST'])#добавить видео
 @login_required
 def add_video():
     title='Добавить видео мастер-класса'
@@ -1087,7 +948,7 @@ def add_video():
                 url = secure_filename(url)#secure folder name
                 photo_album_already_in_DB = Video.query.filter(Video.url == url).first()
                 if photo_album_already_in_DB is None:
-                    new_folder_for_photo_album = os.path.join(app.config['UPLOAD_FOLDER'], app.config['PHOTO_ALBUMS_FOLDER'], url)
+                    new_folder_for_photo_album = os.path.join(current_app.config['UPLOAD_FOLDER'], current_app.config['PHOTO_ALBUMS_FOLDER'], url)
                     if not os.path.exists(new_folder_for_photo_album):
                         os.makedirs(new_folder_for_photo_album)#создаем папку для фото альбома
                     if form.photos.data:                        
@@ -1100,19 +961,19 @@ def add_video():
                             db.session.add(photo)
                 else:
                     flash('Ошибка - фотоальбом с таким названием уже есть в базе')
-                    return redirect(url_for('add_video'))            
+                    return redirect(url_for('admin.add_video'))            
             video = Video(url=url,descr=v_descr,v_type=v_type,comment=comment,active=active,category_id=category)
             db.session.add(video)
             db.session.commit()
             flash('Мастер-класс добавлен.')
         else:
             flash('Ошибка - видео с такой ссылкой / альбом с таким названием уже есть в базе.')
-            return redirect(url_for('add_video'))
-        return redirect(url_for('add_video'))
-    return render_template('add_video.html',title=title,descr=descr,form=form)
+            return redirect(url_for('admin.add_video'))
+        return redirect(url_for('admin.add_video'))
+    return render_template('admin/add_video.html',title=title,descr=descr,form=form)
 
 
-@app.route('/edit_video/<video_id>',methods=['GET', 'POST'])#изменить данные клиента
+@bp.route('/edit_video/<video_id>',methods=['GET', 'POST'])#изменить данные клиента
 @login_required
 def edit_video(video_id=None):
     title = 'Изменить видео'
@@ -1131,8 +992,8 @@ def edit_video(video_id=None):
         video.category_id = form.category.data
         db.session.commit()
         flash('Данные видео изменены!')
-        return redirect(url_for('video_list'))
-    return render_template('add_video.html',title=title,form=form,descr=descr)
+        return redirect(url_for('admin.video_list'))
+    return render_template('admin/add_video.html',title=title,form=form,descr=descr)
 
 
 def show_video_cat_name(cat_id):#возвращает имя канала исходя из id
@@ -1140,8 +1001,8 @@ def show_video_cat_name(cat_id):#возвращает имя канала исх
     name = s.name
     return name
 
-v_types = app.config['V_TYPES']#типы мастер=классов (для системы)
-v_types_str = app.config['V_TYPES_STR']#типы мастер=классов (для отображения)
+v_types = current_app.config['V_TYPES']#типы мастер=классов (для системы)
+v_types_str = current_app.config['V_TYPES_STR']#типы мастер=классов (для отображения)
 
 
 def get_video_type_id(video_name):#получаем id типа мастер-класса исходя из выбранного в форме
@@ -1150,24 +1011,20 @@ def get_video_type_id(video_name):#получаем id типа мастер-к�
 
 
 def get_video_type_name(video_id):#получаем имя типа мастер-класса исходя из выбранного в форме
-    res = None   
-    for key,val in v_types.items():
-        if val==video_id:
-            res = key    
-    return res    
+    return get_video_type_name_u(video_id)
 
 
-@app.route('/video_list')#все видео мастер классов
+@bp.route('/video_list')#все видео мастер классов
 @login_required
 def video_list():
     title = 'Список мастер-классов'
     descr = 'Список всех мастер-классов (видео youtube и фотоальбомов)'
     videos = Video.query.order_by(Video.timestamp.desc()).all()
-    return render_template('video_list.html',title=title,descr=descr,videos=videos, \
+    return render_template('admin/video_list.html',title=title,descr=descr,videos=videos, \
                 show_video_cat_name=show_video_cat_name,get_video_type_name=get_video_type_name)
 
 
-@app.route('/video_per_category/<cat_id>')#все видео мастер классов в данной категории
+@bp.route('/video_per_category/<cat_id>')#все видео мастер классов в данной категории
 @login_required
 def video_per_category(cat_id = None):
     videos = None    
@@ -1180,45 +1037,15 @@ def video_per_category(cat_id = None):
         pass
     title = 'Список видео категории ' + show_video_cat_name(cat_id)
     descr = 'Список всех видео мастер-классов в категории ' + show_video_cat_name(cat_id)
-    return render_template('video_list.html',title=title,descr=descr,videos=videos, \
+    return render_template('admin/video_list.html',title=title,descr=descr,videos=videos, \
                 show_video_cat_name=show_video_cat_name)
 
 
 def get_photos_for_photo_albums(album_name):#список фото для отображения в каруселе в мастер-классах
-    photos = Photo.query \
-            .filter(Photo.photo_type=='photoalbum') \
-            .filter(Photo.photoalbum==album_name).all()
-    return photos
-
-@app.route('/video')#видео мастер-классов
-def video():#мастер классы
-    title = 'Швейный коворкинг, город Алматы, мастер-классы'
-    meta_description = 'Место для любителей шитья, город Алматы. Мастер классы'
-    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, мастер классы, фото, видео'
-    videos_uploaded = False
-    #все активные категории, где есть видео
-    categories = VideoCategory.query.join(Video) \
-                .filter(VideoCategory.active == True) \
-                .order_by(VideoCategory.num).all()
-    videos = VideoCategory.query.join(Video) \
-                    .with_entities(VideoCategory.id,Video.v_type,Video.descr,Video.comment,Video.url,Video.timestamp) \
-                    .filter(VideoCategory.active == True) \
-                    .filter(Video.active == True) \
-                    .order_by(VideoCategory.num) \
-                    .order_by(Video.timestamp.desc()).all()
-    if len(videos) > 0:
-        videos_uploaded = True
-    else:
-        videos_uploaded = False
-    return render_template('video.html',title=title, meta_description = meta_description, \
-                            meta_keywords=meta_keywords, videos=videos, categories=categories, \
-                            get_video_type_name=get_video_type_name, \
-                            get_path_to_static_photo_albums=get_path_to_static_photo_albums,len=len,
-                            get_photos_for_photo_albums=get_photos_for_photo_albums, \
-                            videos_uploaded=videos_uploaded)
+    return get_photos_for_photo_albums_u(album_name)
 
 
-promo_types = app.config['PROMO_TYPES']#типы и id промо акций
+promo_types = current_app.config['PROMO_TYPES']#типы и id промо акций
 
 def get_promo_type_id(promo_name):#получаем id типа акции исходя из выбранного в форме
     res = promo_types[promo_name]
@@ -1233,7 +1060,7 @@ def get_promo_type_name(promo_id):#получаем имя типа акции �
     return res    
 
 
-@app.route('/add_promo',methods=['GET','POST'])#добавить промоакцию
+@bp.route('/add_promo',methods=['GET','POST'])#добавить промоакцию
 @login_required
 @required_roles('admin')
 def add_promo():
@@ -1246,106 +1073,33 @@ def add_promo():
         db.session.add(promo)
         db.session.commit()
         flash('Акция добавлена.')
-        return redirect(url_for('add_promo'))
-    return render_template('add_promo.html',title=title,descr=descr,form=form)
+        return redirect(url_for('admin.add_promo'))
+    return render_template('admin/add_promo.html',title=title,descr=descr,form=form)
 
 
-@app.route('/promo_list')#список акций
+@bp.route('/promo_list')#список акций
 @login_required
 def promo_list():
     title = 'Список акций'
     promos = Promo.query.all()
-    return render_template('promo_list.html',title=title, \
+    return render_template('admin/promo_list.html',title=title, \
                     promos=promos,get_promo_type_name=get_promo_type_name)
 
 
-@app.route('/ask_question',methods=['GET','POST'])#задать вопрос
-def ask_question():
-    title = 'Задать вопрос'
-    form = QuestionForm()
-    meta_description = 'Алматы, швейный коворкинг, Dressidea, задать вопрос'
-    meta_keywords = 'Швейный коворкинг, швейная техника, швейное оборудование, аренда рабочего места, Алматы, задать вопрос'
-    if form.validate_on_submit():
-        q_name = form.name.data
-        q_phone = form.phone.data
-        q_question = form.question.data
-        q = QuestionFromSite(name=q_name,phone=q_phone,question=q_question)
-        try:
-            db.session.add(q)
-            db.session.commit()
-            try:
-                get_q_from_DB = QuestionFromSite.query \
-                    .filter(QuestionFromSite.name == q_name) \
-                    .filter(QuestionFromSite.phone == q_phone) \
-                    .filter(QuestionFromSite.question == q_question) \
-                    .first()
-                _id = str(get_q_from_DB.id)
-                _timestamp = get_q_from_DB.timestamp
-            except:
-                pass
-            send_email('Новый вопрос с dressidea.kz',
-                        sender=app.config['SENDER_EMAIL'],
-                        recipients=[app.config['ADMIN_EMAIL']],
-                        text_body=render_template('email/new_question.txt',
-                                                    _id=_id,q_name=q_name,q_phone=q_phone,q_question=q_question,_timestamp=_timestamp),
-                        html_body=render_template('email/new_question.html',
-                                                    _id=_id,q_name=q_name,q_phone=q_phone,q_question=q_question,_timestamp=_timestamp))
-            if _id:
-                flash('Спасибо, мы получили Ваш вопрос и свяжемся с Вами в ближайшее время! Номер вопроса: '+_id)
-            else:
-                flash('Спасибо, мы получили Ваш вопрос и свяжемся с Вами в ближайшее время!')
-        except:
-            flash('Вопрос не может быть задан из-за технических неполадок. Пожалуйста, попробуйте чуть позже.')
-            return redirect(url_for('ask_question'))
-        return redirect(url_for('ask_question'))
-    return render_template('ask_question.html',title=title,form=form, \
-        meta_description=meta_description,meta_keywords=meta_keywords)
-
-
-@app.route('/all_questions')#список вопросов
+@bp.route('/all_questions')#список вопросов
 @login_required
 def all_questions():
     title = 'Список вопросов с сайта'
     questions = QuestionFromSite.query \
                 .order_by(QuestionFromSite.timestamp.desc()).all()
-    return render_template('all_questions.html',title=title,questions=questions)
+    return render_template('admin/all_questions.html',title=title,questions=questions)
 
 
-@app.route('/question/<q_id>')#просмотр вопроса с сайта
+@bp.route('/question/<q_id>')#просмотр вопроса с сайта
 @login_required
 def question(q_id):
     title = 'Вопрос ' + str(q_id)
     question = QuestionFromSite.query \
                 .filter(QuestionFromSite.id == int(q_id)).first()
-    return render_template('question.html',title=title,question=question)
+    return render_template('admin/question.html',title=title,question=question)
 
-
-def send_email(subject,sender,recipients,text_body,html_body):#отправка email
-    msg = Message(subject,sender=sender,recipients=recipients)
-    msg.body = text_body
-    msg.html = html_body
-    Thread(target=send_async_email,args=(app,msg)).start()
-    
-
-def send_async_email(app,msg):#async mail
-    with app.app_context():
-        mail.send(msg)
-
-
-@app.route('/pricing')#цена
-def pricing():#цена
-    title = 'Швейный коворкинг, город Алматы, цена'
-    meta_description = 'Место для любителей шитья, город Алматы. Цена, стоимость.'
-    meta_keywords = 'Швейный коворкинг, швейное оборудование, Алматы, цена, стоимость, визит, групповой визит'
-    rate = None
-    max_amount = None
-    try:
-        rate = round(g.const_admin.rate)
-        max_amount = round(g.const_admin.max_amount)
-        group_rate = round(g.const_admin.group_rate)
-        group_max_amount = round(g.const_admin.group_max_amount)
-    except:
-        pass    
-    return render_template('pricing.html',title=title, meta_description = meta_description, \
-                            meta_keywords=meta_keywords, rate=rate, max_amount=max_amount, \
-                            group_rate=group_rate, group_max_amount=group_max_amount)

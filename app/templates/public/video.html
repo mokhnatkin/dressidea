@@ -42,11 +42,11 @@
                                             {% for i in range(len(get_photos_for_photo_albums(v.url))) %}
                                                 {% if i==0 %}
                                                     <div class="item active">
-                                                        <img src="{{ url_for('get_path_to_static_photo_albums',album_name=v.url,fname=get_photos_for_photo_albums(v.url)[i].name) }}" alt="Швейный коворкинг Алматы мастер-класс">
+                                                        <img src="{{ url_for('public.get_path_to_static_photo_albums',album_name=v.url,fname=get_photos_for_photo_albums(v.url)[i].name) }}" alt="Швейный коворкинг Алматы мастер-класс">
                                                     </div>
                                                 {% else %}                  
                                                     <div class="item">
-                                                        <img src="{{ url_for('get_path_to_static_photo_albums',album_name=v.url,fname=get_photos_for_photo_albums(v.url)[i].name) }}" alt="Швейный коворкинг Алматы мастер-класс">
+                                                        <img src="{{ url_for('public.get_path_to_static_photo_albums',album_name=v.url,fname=get_photos_for_photo_albums(v.url)[i].name) }}" alt="Швейный коворкинг Алматы мастер-класс">
                                                     </div>
                                                 {% endif %}
                                             {% endfor %}

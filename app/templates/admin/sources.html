@@ -2,7 +2,7 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    <h1>Список категорий видео / фотоальбомов (мастер-классы)</h1>
+    <h1>Источники (откуда приходят клиенты)</h1>
     <p>{{ descr }}</p>
     <div class="row">
         <div class="col-md-4">
@@ -13,15 +13,13 @@
     <h1>Уже в списке</h1>
     <div class="table-responsive">
         <table class="table table-hover">
-            <tr>
-                <th>Порядковый номер</th>
+            <tr>            
                 <th>Название</th>
-                <th>Отображать на сайте?</th>
+                <th>Активно?</th>
                 <th>Изменить</th>
             </tr>
             {% for i in items %}
-            <tr>
-                <td>{{ i.num }}</td>
+            <tr>            
                 <td>{{ i.name }}</td>
                 <td>
                     {% if i.active %}
@@ -30,7 +28,7 @@
                         Нет
                     {% endif %}                
                 </td>
-                <td><a href="{{ url_for('edit_video_category',item_id=i.id) }}">Изменить</a></td>
+                <td><a href="{{ url_for('admin.edit_source',item_id=i.id) }}">Изменить</a></td>
             </tr>
             {% endfor %}
         </table>

@@ -7,4 +7,4 @@
 Текст вопроса:
 {{ q_question }}
 
-Чтобы посмотреть вопрос в dressidea.kz, нажмите по ссылке {{ url_for('question',q_id=_id,_external=True) }} 
+Чтобы посмотреть вопрос в dressidea.kz, нажмите по ссылке {{ url_for('admin.question',q_id=_id,_external=True) }} 
