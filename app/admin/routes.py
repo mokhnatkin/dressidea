@@ -1060,6 +1060,28 @@ def get_promo_type_name(promo_id):#получаем имя типа акции �
     return res    
 
 
+@bp.route('/edit_promo/<_id>',methods=['GET', 'POST'])#изменить промоакцию
+@login_required
+@required_roles('admin')
+def edit_promo(_id):
+    title = 'Редактирование промоакции'
+    form = PromoForm()    
+    descr = 'Здесь можно изменить промоакцию'
+    promo = Promo.query.filter(Promo.id == _id).first()
+    if request.method == 'GET':
+        form = PromoForm(obj=promo)
+    if form.validate_on_submit():
+        promo_type = get_promo_type_id(form.promo_type.data)
+        promo.name = form.name.data
+        promo.promo_type = promo_type
+        promo.value = form.value.data
+        promo.active=form.active.data
+        db.session.commit()        
+        flash('Промоакция успешно изменена!')
+        return redirect(url_for('admin.promo_list'))
+    return render_template('admin/edit_promo.html', title=title,form=form,descr=descr)
+
+
 @bp.route('/add_promo',methods=['GET','POST'])#добавить промоакцию
 @login_required
 @required_roles('admin')

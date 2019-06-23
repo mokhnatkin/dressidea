@@ -162,7 +162,7 @@ class PromoForm(FlaskForm):#добавить промо акции
     promo_type = SelectField('Тип акции',choices = promo_types)
     value = DecimalField('Значение (тг. или %)',validators=[DataRequired()])
     active = BooleanField(label='Акция активна')
-    submit = SubmitField('Добавить')
+    submit = SubmitField('Добавить / Изменить')
 
 
 class ConfirmGroupVisitAmountForm(FlaskForm):#подтвердить стоимость группового визита

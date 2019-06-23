@@ -11,6 +11,7 @@
                 <th>Тип</th>
                 <th>Значение</th>
                 <th>Активна?</th>
+                <th>Изменить</th>
             </tr>
                 {% for p in promos %}
                     <tr>
@@ -24,6 +25,7 @@
                                 Нет
                             {% endif %}                            
                         </td>
+                        <td><a href="{{ url_for('admin.edit_promo',_id=p.id) }}">Изменить</a></td>
                     </tr>
                 {% endfor %}            
         </table>

@@ -60,10 +60,10 @@
                         <a href="{{ url_for('admin.deactivateFile',fid=f.id) }}">Скрыть</a>
                     {% else %}
                         <a href="{{ url_for('admin.activateFile',fid=f.id) }}">Показать</a>
-                    {% endif %}                
+                    {% endif %}
                 </td>
                 <td>
-                    <a href="{{ url_for('admin.edit_file',fid=f.id) }}">Изменить описание</a>                    
+                    <a href="{{ url_for('admin.edit_file',fid=f.id) }}">Изменить описание</a>
                 </td>
                 <td>
                     {% if not f.active %}
