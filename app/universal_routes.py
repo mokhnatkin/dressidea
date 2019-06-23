@@ -1,5 +1,5 @@
 from flask import g, send_file, current_app, flash, redirect, url_for
-from app.models import Const_public, Const_admin, Photo
+from app.models import Const_public, Const_admin, Photo, Client
 from datetime import datetime
 from flask_babel import get_locale
 import os
@@ -58,6 +58,7 @@ def get_path_to_static_u(fname):
     p = os.path.join(os.path.dirname(os.path.abspath(current_app.config['UPLOAD_FOLDER'])),current_app.config['UPLOAD_FOLDER'],fname)
     return send_file(p)
 
+
 def get_path_to_static_photo_albums_u(album_name,fname):
     p = os.path.join(os.path.dirname(os.path.abspath(current_app.config['UPLOAD_FOLDER'])),current_app.config['UPLOAD_FOLDER'],current_app.config['PHOTO_ALBUMS_FOLDER'],album_name,fname)
     return send_file(p)
@@ -77,6 +78,11 @@ def get_video_type_name_u(video_id):#получаем имя типа масте
         if val==video_id:
             res = key    
     return res
+
+
+def get_client_by_id(_id):#объект "клиент" по id
+    client = Client.query.filter(Client.id == _id).first()
+    return client
 
 
 def send_async_email(app,msg):#async mail

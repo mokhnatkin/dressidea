@@ -15,14 +15,19 @@
 {% if show_stat %}
     {% if total_stat %}
     <div class="row">
-        <h3>Всего за выбранный период</h3>
+        <h3>Визиты</h3>
         <p>Визитов: <b> {{ total_stat.count }}</b></p>
         <p>Сумма: <b>{{ "{:,.0f}".format(total_stat.sum) }}</b></p>
+        <p>Средний чек: <b>{{ "{:,.0f}".format(total_stat.av_check) }}</b></p>
+        <h3>Брони</h3>
+        {% for b in bookings_stat %}
+            <p>{{ b.status }}: <b>{{ b.count }}</b></p>
+        {% endfor %}
     </div>
     {% endif %}
-    {% if stat_per_day_len and stat_per_day_len>0 %}
+    {% if len(stat_per_day) > 0 %}
     <div class="row">
-        <h3>Статистика по дням</h3>
+        <h3>Статистика визитов по дням</h3>
         <div class="col-md-12">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -48,6 +53,34 @@
         </div>    
     </div>
     {% endif %}
+    {% if len(stat_per_client) > 0 %}
+    <div class="row">
+        <h3>Статистика визитов по клиентам</h3>
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <tr>
+                        <th>Клиент</th>
+                        <th>Визитов</th>
+                        <th>Сумма</th>
+                    </tr>
+                    {% for i in stat_per_client %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.client_info',client_id=i.client_id) }}">{{ get_client_by_id(i.client_id).name }}</a></td>
+                        <td>{{ i.count }}</td>
+                        <td>{{ "{:,.0f}".format(i.sum) }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td><b>ИТОГО</b></td>
+                        <td><b>{{ total_stat.count }}</b></td>
+                        <td><b>{{ "{:,.0f}".format(total_stat.sum) }}</b></td>                        
+                    </tr>
+                </table>
+            </div>
+        </div>    
+    </div>
+    {% endif %}    
 {% endif %}
 
 {% endblock %}

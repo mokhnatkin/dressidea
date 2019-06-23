@@ -20,7 +20,7 @@ import cyrtranslit
 from app.admin import bp
 from app.universal_routes import before_request_u, downloadFile_u, get_path_to_static_u, \
                     get_path_to_static_photo_albums_u, get_photos_for_photo_albums_u, \
-                    get_video_type_name_u, required_roles_u
+                    get_video_type_name_u, required_roles_u, get_client_by_id
 
 
 @bp.before_request
@@ -451,7 +451,7 @@ def client_info(client_id=None):
                         .order_by(Visit.begin).all()                        
     if visits is not None and len(visits)>0:
         show_visits = True
-        total_stat, stat_per_day = compute_stat(visits)
+        total_stat, stat_per_day, stat_per_client = compute_stat(visits)
     bookings = Booking.query.filter(Booking.client_id == client_id) \
                         .order_by(Booking.begin).all()
     if bookings is not None and len(bookings)>0:
@@ -760,10 +760,31 @@ def edit_booking(booking_id=None):
     return render_template('admin/add_booking_for_client.html', title=title,form=form,descr=descr)
 
 
-def compute_stat(visits):
+def bookings_by_status(bookings):#вспомогательная функция - статусы по броням
+    count_pos = 0
+    count_neg = 0
+    count_undefined = 0
+    for b in bookings:
+        if b.attended == True:
+            count_pos += 1
+        elif b.attended == False:
+            count_neg += 1
+        else:
+            count_undefined += 1
+    res = list()
+    total = len(bookings)
+    res.append({'status':'Всего','count':total})
+    res.append({'status':'Клиент пришел','count':count_pos})
+    res.append({'status':'Клиент НЕ пришел','count':count_neg})
+    res.append({'status':'Статус не указан','count':count_undefined})
+    return res
+
+
+def compute_stat(visits):#вспомогательная функция - инфо по визитам
     count = 0
     sum = 0
     dates = dict()
+    clients = dict()
     for v in visits:
         count += 1
         sum += v.amount
@@ -772,7 +793,12 @@ def compute_stat(visits):
             dates[day] += 1
         else:
             dates[day] = 1
-    total_stat = {'count':count,'sum':round(sum)}
+        client_id = v.client_id
+        if client_id in clients:
+            clients[client_id] += 1
+        else:
+            clients[client_id] = 1            
+    total_stat = {'count':count,'sum':round(sum),'av_check':round((sum/count))}
     stat_per_day = list()
     for key,val in dates.items():
         amount = 0
@@ -780,8 +806,17 @@ def compute_stat(visits):
             if v.begin.date() == key:
                 amount += v.amount
         d = {'date':key,'count':val,'sum':round(amount)}
-        stat_per_day.append(d)    
-    return total_stat, stat_per_day
+        stat_per_day.append(d)
+    stat_per_client = list()
+    for key,val in clients.items():
+        amount = 0
+        for v in visits:
+            if v.client_id == key:
+                amount += v.amount
+        c = {'client_id':key,'count':val,'sum':round(amount)}
+        stat_per_client.append(c)
+        stat_per_client.sort(key=lambda x: x['sum'], reverse=True)#сортируем по убыванию
+    return total_stat, stat_per_day, stat_per_client
 
 
 @bp.route('/stat',methods=['GET', 'POST'])#статистика за заданный период
@@ -794,7 +829,8 @@ def stat():
     visits = None
     total_stat = None
     stat_per_day = None
-    stat_per_day_len = None
+    stat_per_client = None
+    bookings_stat = None
     today = datetime.utcnow()
     beg_d = datetime(today.year,today.month,1)
     end_d = today
@@ -809,13 +845,19 @@ def stat():
                 .filter(Visit.begin >= begin_d) \
                 .filter(Visit.begin < end_d) \
                 .all()
-            total_stat, stat_per_day = compute_stat(visits)
-            stat_per_day_len = len(stat_per_day)
+            total_stat, stat_per_day, stat_per_client = compute_stat(visits)
+            bookings = Booking.query \
+                .filter(Booking.timestamp >= begin_d) \
+                .filter(Booking.timestamp < end_d) \
+                .all()
+            bookings_stat = bookings_by_status(bookings)
             show_stat = True
         except:
             flash('Не могу выгрузить данные для расчета статистики')
     return render_template('admin/stat.html',title=title,form=form,descr=descr,show_stat=show_stat,\
-                                        total_stat=total_stat,stat_per_day=stat_per_day,stat_per_day_len=stat_per_day_len)
+                                        total_stat=total_stat,stat_per_day=stat_per_day, \
+                                        len=len,stat_per_client=stat_per_client, \
+                                        get_client_by_id=get_client_by_id, bookings_stat=bookings_stat)
 
 
 @bp.route('/delete_visit/<visit_id>')#удалить визит
