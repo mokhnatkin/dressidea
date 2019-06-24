@@ -740,15 +740,13 @@ def change_booking_status_negative(booking_id=None):
 def change_client_info(client_id=None):
     title = 'Изменить данные клиента'
     descr = 'Здесь можно изменить данные клиента.'
-    h1_txt = 'Изменить данные клиента'
-    current_source = None
+    h1_txt = 'Изменить данные клиента'    
     form = ClientChangeForm()
     client = Client.query.filter(Client.id == client_id).first()
     if request.method == 'GET':
         form = ClientChangeForm(obj=client)
-        if client.source_id is not None:
-            current_source = show_source_name(client.source_id)
-            descr = descr + ' Текущий источник (откуда пришел клиент) - ' + current_source + '. Изменить можно ниже.'
+        if client.source_id is not None:            
+            form.source.data = str(client.source_id)
     if form.validate_on_submit():
         client.name = form.name.data
         client.phone = form.phone.data
