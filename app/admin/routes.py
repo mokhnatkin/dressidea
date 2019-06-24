@@ -523,7 +523,7 @@ def add_visit_for_client(client_id = None):
 
 @bp.route('/add_booking/<client_id>',methods=['GET', 'POST'])#добавляем бронь
 @login_required
-def add_booking_for_client(client_id = None):
+def add_booking_for_client(client_id):
     title='Добавить бронь.'
     client = Client.query.filter(Client.id == client_id).first()
     descr = 'Добавление брони. Клиент: ' + client.name + ', телефон ' + str(client.phone)
@@ -532,9 +532,18 @@ def add_booking_for_client(client_id = None):
         UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
         begin = datetime.combine(form.begin_d.data, form.begin_t.data) + UTC_OFFSET_TIMEDELTA
         end = datetime.combine(form.end_d.data, form.end_t.data) + UTC_OFFSET_TIMEDELTA
-        booking = Booking(client_id=client_id,begin=begin,end=end,comment=form.comment.data)
-        db.session.add(booking)
-        db.session.commit()
+        #проверка - по данному клиенту не должно быть брони на это время
+        b_already = Booking.query \
+                        .filter(Booking.client_id == client_id) \
+                        .filter(Booking.begin <= begin) \
+                        .filter(Booking.end >= begin).first()
+        if b_already is not None:
+            flash('Бронь для клиента '+ client.name + ' на указанное время уже есть')
+            return redirect(url_for('admin.add_visit_booking'))
+        else:
+            booking = Booking(client_id=client_id,begin=begin,end=end,comment=form.comment.data)
+            db.session.add(booking)
+            db.session.commit()
         return redirect(url_for('admin.all_bookings',param='all'))
     return render_template('admin/add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
 
@@ -843,13 +852,11 @@ def stat():
             visits = Visit.query \
                 .filter(Visit.end != None) \
                 .filter(Visit.begin >= begin_d) \
-                .filter(Visit.begin < end_d) \
-                .all()
+                .filter(Visit.begin < end_d).all()                
             total_stat, stat_per_day, stat_per_client = compute_stat(visits)
             bookings = Booking.query \
-                .filter(Booking.timestamp >= begin_d) \
-                .filter(Booking.timestamp < end_d) \
-                .all()
+                .filter(Booking.begin >= begin_d) \
+                .filter(Booking.begin < end_d).all()                
             bookings_stat = bookings_by_status(bookings)
             show_stat = True
         except:

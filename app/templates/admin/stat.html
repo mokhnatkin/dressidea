@@ -14,17 +14,42 @@
 </div>
 {% if show_stat %}
     {% if total_stat %}
-    <div class="row">
-        <h3>Визиты</h3>
-        <p>Визитов: <b> {{ total_stat.count }}</b></p>
-        <p>Сумма: <b>{{ "{:,.0f}".format(total_stat.sum) }}</b></p>
-        <p>Средний чек: <b>{{ "{:,.0f}".format(total_stat.av_check) }}</b></p>
-        <h3>Брони</h3>
-        {% for b in bookings_stat %}
-            <p>{{ b.status }}: <b>{{ b.count }}</b></p>
-        {% endfor %}
-    </div>
+        <div class="row">
+            <div class="col-md-6 col-sm-12 col-xs-12">
+                <h3>Визиты</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <tr>
+                            <td>Кол-во визитов</td>
+                            <td>{{ total_stat.count }}</td>
+                        </tr>
+                        <tr>
+                            <td>Сумма</td>
+                            <td>{{ "{:,.0f}".format(total_stat.sum) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Средний чек</td>
+                            <td>{{ "{:,.0f}".format(total_stat.av_check) }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6 col-sm-12 col-xs-12">
+                <h3>Брони</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        {% for b in bookings_stat %}
+                        <tr>
+                            <td>{{ b.status }}</td>
+                            <td>{{ b.count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
     {% endif %}
+
     {% if len(stat_per_day) > 0 %}
     <div class="row">
         <h3>Статистика визитов по дням</h3>
@@ -53,6 +78,7 @@
         </div>    
     </div>
     {% endif %}
+
     {% if len(stat_per_client) > 0 %}
     <div class="row">
         <h3>Статистика визитов по клиентам</h3>
@@ -80,7 +106,8 @@
             </div>
         </div>    
     </div>
-    {% endif %}    
+    {% endif %}
+
 {% endif %}
 
 {% endblock %}
