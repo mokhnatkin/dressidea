@@ -46,6 +46,7 @@ def add_str_timestamp(filename):#adds string timestamp to filename in order to m
 def upload_file():
     title = 'Загрузка фото'
     form = PhotoUploadForm()
+    h1_txt = 'Загрузка фото'
     descr = 'Здесь загружаются фото для отображения в карусели на главной странице, или в галерее'    
     if form.validate_on_submit():
         f = form.photo.data        
@@ -57,7 +58,8 @@ def upload_file():
         db.session.commit()
         flash('Фото успешно загружено!')
         return redirect(url_for('admin.upload_file'))
-    return render_template('admin/upload_file.html', title=title,form=form,descr=descr)
+    return render_template('admin/add_edit_DB_item.html', title=title, \
+            form=form,descr=descr,h1_txt=h1_txt)
 
 
 @bp.route('/delete_file/<fid>')#физически удалить фото
@@ -89,7 +91,8 @@ def delete_file(fid = None):
 @required_roles('admin')
 def edit_file(fid = None):
     title = 'Редактирование типа и описания фото'
-    form = PhotoEditForm()    
+    form = PhotoEditForm()
+    h1_txt = 'Изменить фото'
     descr = 'Здесь можно изменить заголовок, описание или тип фото'
     photo = Photo.query.filter(Photo.id == fid).first()
     if request.method == 'GET':
@@ -101,7 +104,8 @@ def edit_file(fid = None):
         db.session.commit()        
         flash('Фото успешно изменено!')
         return redirect(url_for('admin.files',param='all',album_name='None'))
-    return render_template('admin/edit_file.html', title=title,form=form,descr=descr)
+    return render_template('admin/add_edit_DB_item.html', title=title, \
+                h1_txt=h1_txt,form=form,descr=descr)
 
 
 @bp.route('/files/<param>/<album_name>')#список загруженных фото
@@ -173,6 +177,7 @@ def deactivateFile(fid = None):
 def const_admin():
     title='Константы админки'
     form = Const_adminForm()
+    h1_txt = 'Значения констант админки'
     descr = 'Здесь изменяются константы админки, используемые для расчетов'
     const_set = None
     try:
@@ -197,7 +202,8 @@ def const_admin():
         db.session.commit()
         flash('Значения констант изменены!')
         return redirect(url_for('admin.const_admin'))
-    return render_template('admin/const_admin.html', title=title,form=form,descr=descr)
+    return render_template('admin/add_edit_DB_item.html', title=title, form=form, \
+                h1_txt=h1_txt, descr=descr)
 
 
 @bp.route('/const_public',methods=['GET', 'POST'])#константы для паблика
@@ -206,6 +212,7 @@ def const_admin():
 def const_public():
     title='Константы паблика'
     form = Const_publicForm()
+    h1_txt = 'Значения констант сайта'
     descr = 'Здесь изменяются константы админки, используемые для расчетов'
     const_set = None
     try:
@@ -238,7 +245,8 @@ def const_public():
         db.session.commit()
         flash('Значения констант изменены!')
         return redirect(url_for('admin.const_public'))
-    return render_template('admin/const_public.html', title=title,form=form,descr=descr)
+    return render_template('admin/add_edit_DB_item.html', title=title,form=form, \
+                h1_txt=h1_txt, descr=descr)
 
 
 @bp.route('/users')#список пользователей
@@ -382,6 +390,7 @@ def add_client():
     title='Добавить клиента'
     descr = 'Здесь создается карточка клиента'
     form = ClientForm()
+    h1_txt = 'Добавить клиента'
     if form.validate_on_submit():
         phone = form.phone.data
         try:
@@ -405,7 +414,8 @@ def add_client():
         else:
             flash('Ошибка - клиент с таким телефоном уже есть в базе.')
         return redirect(url_for('admin.add_client'))
-    return render_template('admin/add_client.html',title=title,descr=descr,form=form)
+    return render_template('admin/add_edit_DB_item.html',title=title, \
+                h1_txt=h1_txt,descr=descr,form=form)
 
 
 def show_source_name(source_id):#возвращает имя канала исходя из id
@@ -494,6 +504,7 @@ def add_visit_booking():
 @login_required
 def add_visit_for_client(client_id = None):
     title='Добавить визит'
+    h1_txt = 'Добавить визит'
     client = Client.query.filter(Client.id == client_id).first()
     descr = 'Добавление визита. Клиент: ' + client.name + ', телефон ' + str(client.phone)
     form = VisitForm()
@@ -518,7 +529,8 @@ def add_visit_for_client(client_id = None):
         else:
             flash('У клиента есть открытые визиты. Перед добавлением нового визита их необходимо закрыть.')
             return redirect(url_for('admin.visits_today',param='all'))
-    return render_template('admin/add_visit_for_client.html',title=title,descr=descr,client=client,form=form)
+    return render_template('admin/add_edit_DB_item.html',title=title, \
+                descr=descr,client=client,form=form,h1_txt=h1_txt)
 
 
 @bp.route('/add_booking/<client_id>',methods=['GET', 'POST'])#добавляем бронь
@@ -528,6 +540,7 @@ def add_booking_for_client(client_id):
     client = Client.query.filter(Client.id == client_id).first()
     descr = 'Добавление брони. Клиент: ' + client.name + ', телефон ' + str(client.phone)
     form = BookingForm()
+    h1_txt = 'Добавить бронь'
     if form.validate_on_submit():
         UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
         begin = datetime.combine(form.begin_d.data, form.begin_t.data) + UTC_OFFSET_TIMEDELTA
@@ -545,7 +558,8 @@ def add_booking_for_client(client_id):
             db.session.add(booking)
             db.session.commit()
         return redirect(url_for('admin.all_bookings',param='all'))
-    return render_template('admin/add_booking_for_client.html',title=title,descr=descr,client=client,form=form)
+    return render_template('admin/add_edit_DB_item.html',title=title,descr=descr, \
+        client=client,form=form,h1_txt=h1_txt)
 
 
 def compute_amount_no_promo(begin,param):#рассчитать стоимость визита без акций
@@ -648,7 +662,8 @@ def close_visit(visit_id=None):
 @login_required
 def confirm_and_close_group_visit(visit_id,amount):
     title='Подтвердить и закрыть групповой визит'
-    form = ConfirmGroupVisitAmountForm()    
+    form = ConfirmGroupVisitAmountForm()
+    h1_txt = 'Подтвердить сумму и закрыть групповой визит'
     visit = Visit.query.filter(Visit.id == visit_id).first()
     if request.method == 'GET':
         form.amount.data = float(amount)
@@ -657,7 +672,8 @@ def confirm_and_close_group_visit(visit_id,amount):
         visit.end = datetime.utcnow()
         db.session.commit()
         return redirect(url_for('admin.visits_today',param='today'))
-    return render_template('admin/confirm_and_close_group_visit.html', title=title, form=form)
+    return render_template('admin/add_edit_DB_item.html', title=title, \
+                form=form,h1_txt=h1_txt)
 
 
 @bp.route('/open_closed_visit/<visit_id>')#открыть завершенный по ошибке визит
@@ -723,7 +739,8 @@ def change_booking_status_negative(booking_id=None):
 @login_required
 def change_client_info(client_id=None):
     title = 'Изменить данные клиента'
-    descr = 'Здесь можно изменить данные клиента'
+    descr = 'Здесь можно изменить данные клиента.'
+    h1_txt = 'Изменить данные клиента'
     current_source = None
     form = ClientChangeForm()
     client = Client.query.filter(Client.id == client_id).first()
@@ -731,6 +748,7 @@ def change_client_info(client_id=None):
         form = ClientChangeForm(obj=client)
         if client.source_id is not None:
             current_source = show_source_name(client.source_id)
+            descr = descr + ' Текущий источник (откуда пришел клиент) - ' + current_source + '. Изменить можно ниже.'
     if form.validate_on_submit():
         client.name = form.name.data
         client.phone = form.phone.data
@@ -742,7 +760,8 @@ def change_client_info(client_id=None):
         db.session.commit()
         flash('Данные клиента изменены!')
         return redirect(url_for('admin.clients'))
-    return render_template('admin/add_client.html', title=title,form=form,descr=descr,current_source=current_source)
+    return render_template('admin/add_edit_DB_item.html', title=title,form=form, \
+        descr=descr,h1_txt=h1_txt)
 
 
 @bp.route('/edit_booking/<booking_id>',methods=['GET', 'POST'])#изменить данные брони
@@ -751,6 +770,7 @@ def edit_booking(booking_id=None):
     title = 'Изменить данные брони'
     descr = 'Здесь можно изменить данные брони'
     form = BookingForm()
+    h1_txt = 'Изменить бронь'
     booking = Booking.query.filter(Booking.id == booking_id).first()
     UTC_OFFSET_TIMEDELTA = datetime.utcnow() - datetime.now()
     if request.method == 'GET':        
@@ -766,7 +786,8 @@ def edit_booking(booking_id=None):
         db.session.commit()
         flash('Данные брони изменены!')
         return redirect(url_for('admin.all_bookings',param='all'))
-    return render_template('admin/add_booking_for_client.html', title=title,form=form,descr=descr)
+    return render_template('admin/add_edit_DB_item.html', title=title, \
+                form=form,descr=descr,h1_txt=h1_txt)
 
 
 def bookings_by_status(bookings):#вспомогательная функция - статусы по броням
@@ -886,6 +907,7 @@ def delete_visit(visit_id = None):
 @required_roles('admin')
 def edit_visit(visit_id = None):
     form = EditVisitAmountForm()
+    h1_txt = 'Изменить визит'
     visit = Visit.query.filter(Visit.id == visit_id).first()
     if request.method == 'GET':
         form = EditVisitAmountForm(obj=visit)
@@ -897,7 +919,7 @@ def edit_visit(visit_id = None):
         db.session.commit()        
         flash('Визит успешно изменен!')
         return redirect(url_for('admin.visits_today',param='all'))        
-    return render_template('admin/edit_visit.html', form=form)
+    return render_template('admin/add_edit_DB_item.html', form=form, h1_txt=h1_txt)
 
 
 @bp.route('/delete_booking/<booking_id>')#удалить бронь
@@ -1109,7 +1131,8 @@ def get_promo_type_name(promo_id):#получаем имя типа акции �
 @required_roles('admin')
 def edit_promo(_id):
     title = 'Редактирование промоакции'
-    form = PromoForm()    
+    form = PromoForm()
+    h1_txt = 'Изменить промоакцию'
     descr = 'Здесь можно изменить промоакцию'
     promo = Promo.query.filter(Promo.id == _id).first()
     if request.method == 'GET':
@@ -1123,7 +1146,8 @@ def edit_promo(_id):
         db.session.commit()        
         flash('Промоакция успешно изменена!')
         return redirect(url_for('admin.promo_list'))
-    return render_template('admin/edit_promo.html', title=title,form=form,descr=descr)
+    return render_template('admin/add_edit_DB_item.html', title=title, \
+        h1_txt=h1_txt,form=form,descr=descr)
 
 
 @bp.route('/add_promo',methods=['GET','POST'])#добавить промоакцию
@@ -1132,6 +1156,7 @@ def edit_promo(_id):
 def add_promo():
     title='Добавить акцию'
     descr = 'Здесь можно добавить акцию'
+    h1_txt = 'Добавить промоакцию'
     form = PromoForm()
     if form.validate_on_submit():
         promo_type = get_promo_type_id(form.promo_type.data)
@@ -1140,7 +1165,8 @@ def add_promo():
         db.session.commit()
         flash('Акция добавлена.')
         return redirect(url_for('admin.add_promo'))
-    return render_template('admin/add_promo.html',title=title,descr=descr,form=form)
+    return render_template('admin/add_edit_DB_item.html',title=title, \
+        h1_txt=h1_txt,descr=descr,form=form)
 
 
 @bp.route('/promo_list')#список акций
