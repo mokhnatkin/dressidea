@@ -840,23 +840,18 @@ def stat():
     stat_per_day = None
     stat_per_client = None
     bookings_stat = None
-    today = datetime.utcnow()
-    beg_d = datetime(today.year,today.month,1)
-    end_d = today
-    form.begin_d.data = beg_d
-    form.end_d.data = end_d
     if form.validate_on_submit():
-        begin_d = form.begin_d.data
-        end_d = form.end_d.data  + timedelta(days=1)
-        try:#все закрытые визиты за заданный в форме период
+        begin_date = form.begin_d.data        
+        end_date = form.end_d.data + timedelta(days=1)
+        try:#все закрытые визиты за заданный в форме период            
             visits = Visit.query \
                 .filter(Visit.end != None) \
-                .filter(Visit.begin >= begin_d) \
-                .filter(Visit.begin < end_d).all()                
+                .filter(Visit.begin >= begin_date) \
+                .filter(Visit.begin < end_date).all()
             total_stat, stat_per_day, stat_per_client = compute_stat(visits)
             bookings = Booking.query \
-                .filter(Booking.begin >= begin_d) \
-                .filter(Booking.begin < end_d).all()                
+                .filter(Booking.begin >= begin_date) \
+                .filter(Booking.begin < end_date).all()
             bookings_stat = bookings_by_status(bookings)
             show_stat = True
         except:
