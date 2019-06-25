@@ -487,12 +487,30 @@ def add_visit_booking():
     prev_url = url_for('admin.add_visit_booking',page=clients.prev_num) if clients.has_prev else None            
     if form.validate_on_submit():
         try:
-            client_by_phone = Client.query.filter(Client.phone == form.phone.data).first()            
+            phone = form.phone.data
+            name = form.name.data
+            if len(phone) > 0:#ищем по телефону
+                client_by_phone = Client.query.filter(Client.phone == phone).first()
+                if client_by_phone is None and len(name) > 0:#по телефону не нашли, но есть имя
+                    all_clients = Client.query.all()
+                    for c in all_clients:
+                        if c.name.upper() == name.upper():
+                            client_by_phone = c
+                            break
+            elif len(name) > 0:#ищем по имени
+                all_clients = Client.query.all()
+                for c in all_clients:
+                    if c.name.upper() == name.upper():
+                        client_by_phone = c
+                        break
+            else:
+                flash('Для поиска нужно заполнить хотя бы одно поле')
+                return redirect(url_for('admin.add_visit_booking'))
             if client_by_phone is not None:
                 client_found = True
                 flash('Клиент найден!')
             else:                
-                flash('Клиент с данным номером не найден в базе. Его нужно создать.')
+                flash('Клиент с указанным номером / именем не найден в базе. Его нужно создать.')
         except:
             flash('Не удалось выполнить поиск.')
     return render_template('admin/add_visit_booking.html',title=title,descr=descr,clients=clients.items,\

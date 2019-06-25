@@ -124,7 +124,8 @@ class ClientChangeForm(FlaskForm):#изменяем данные клиента
 
 
 class ClientSearchForm(FlaskForm):#ищем клиента для добавления брони / визита
-    phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
+    phone = StringField('Мобильный телефон; образец 87017166243')
+    name = StringField('Имя')
     submit = SubmitField('Найти')
 
 
