@@ -21,6 +21,7 @@
                 <th>Создан</th>
                 <th>Комментарий</th>
                 <th>Изменить данные</th>
+                <th>Удалить</th>
             </tr>
             {% if not client_found %}
                 {% for c in clients %}
@@ -37,6 +38,9 @@
                         <td>{{ c.comment }}</td>
                         <td>
                             <a href="{{ url_for('admin.change_client_info',client_id=c.id) }}">Изменить</a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.delete_client',client_id=c.id) }}">Удалить</a>
                         </td>
                     </tr>
                 {% endfor %}            

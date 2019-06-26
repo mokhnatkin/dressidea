@@ -480,13 +480,11 @@ def search_client_by_name(name):#неточный поиск клиента по
         for c in all_clients:
             if c.name.strip().upper() == name:#игнорируем пробелы и регистр
                 clients_by_name.append(c)
-                break
-    if len(clients_by_name) == 0:#ничего не было найдено, пробуем неточный поиск
-        for c in all_clients:
+                continue
             sim_coef = SequenceMatcher(None, c.name.strip().upper(), name).ratio()
-            if_name_contains = (name in c.name.strip().upper())            
+            if_name_contains = (name in c.name.strip().upper())
             if if_name_contains or sim_coef > 0.7:#имя из поиска содержится в имени клиента, или строки похожи
-                clients_by_name.append(c)                
+                clients_by_name.append(c)             
     return clients_by_name
 
 
@@ -935,6 +933,31 @@ def delete_visit(visit_id = None):
         flash('Визит для удаления не найден. Возможно, он уже был удалён ранее.')
         return redirect(url_for('admin.visits_today',param='all'))
     return redirect(url_for('admin.visits_today',param='all'))
+
+
+@bp.route('/delete_client/<client_id>')#удалить клиента
+@login_required
+@required_roles('admin')
+def delete_client(client_id):
+    client = Client.query.filter(Client.id == client_id).first()
+    if client is not None:
+        visits = Visit.query.filter(Visit.client_id == client_id).all()
+        bookings = Booking.query.filter(Booking.client_id == client_id).all()
+        if len(visits) > 0 or len(bookings) > 0:
+            flash('У клиента есть визиты и брони, его нельзя удалять')
+            return redirect(url_for('admin.clients'))
+        else:
+            try:
+                db.session.delete(client)
+                db.session.commit()
+                flash('Клиент удалён')                
+            except:
+                flash('Не удалось удалить клиента.')
+                return redirect(url_for('admin.clients'))
+    else:
+        flash('Клиент для удаления не найден. Возможно, он уже был удалён ранее.')
+        return redirect(url_for('admin.clients'))
+    return redirect(url_for('admin.clients'))
 
 
 @bp.route('/edit_visit/<visit_id>',methods=['GET', 'POST'])#изменить визит
