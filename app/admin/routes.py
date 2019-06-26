@@ -16,8 +16,9 @@ from flask_babel import get_locale
 import os
 from functools import wraps
 from sqlalchemy import func
-import cyrtranslit
+import cyrtranslit#для транслитирирования
 from app.admin import bp
+from difflib import SequenceMatcher#для неточного поиска
 from app.universal_routes import before_request_u, downloadFile_u, get_path_to_static_u, \
                     get_path_to_static_photo_albums_u, get_photos_for_photo_albums_u, \
                     get_video_type_name_u, required_roles_u, get_client_by_id
@@ -400,13 +401,13 @@ def add_client():
         name = form.name.data
         if phone_already_in_DB is None:
             if form.source.data == 'not_set':
-                client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)
+                client = Client(name=name.strip(),phone=phone,insta=form.insta.data,comment=form.comment.data)
             else:
                 try:
                     source_id = int(form.source.data)
-                    client = Client(name=name,phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)                    
+                    client = Client(name=name.strip(),phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)                    
                 except:
-                    client = Client(name=name,phone=phone,insta=form.insta.data,comment=form.comment.data)                    
+                    client = Client(name=name.strip(),phone=phone,insta=form.insta.data,comment=form.comment.data)                    
                     flash('Не получилось получить id канала. Клиент будет создан без указания канала.')
             db.session.add(client)
             db.session.commit()
@@ -471,13 +472,31 @@ def client_info(client_id=None):
                             show_bookings=show_bookings,bookings=bookings,total_stat=total_stat)
 
 
+def search_client_by_name(name):#неточный поиск клиента по имени
+    clients_by_name = list()
+    name = name.strip().upper()
+    all_clients = Client.query.all()
+    if all_clients is not None:
+        for c in all_clients:
+            if c.name.strip().upper() == name:#игнорируем пробелы и регистр
+                clients_by_name.append(c)
+                break
+    if len(clients_by_name) == 0:#ничего не было найдено, пробуем неточный поиск
+        for c in all_clients:
+            sim_coef = SequenceMatcher(None, c.name.strip().upper(), name).ratio()
+            if_name_contains = (name in c.name.strip().upper())            
+            if if_name_contains or sim_coef > 0.7:#имя из поиска содержится в имени клиента, или строки похожи
+                clients_by_name.append(c)                
+    return clients_by_name
+
+
 @bp.route('/add_visit_booking',methods=['GET', 'POST'])#список клиентов для добавления визита или брони
 @login_required
 def add_visit_booking():
     title='Добавить визит или бронь'
     descr = 'Перед добавлением визита / брони клиента нужно создать, после чего клиента можно выбрать из списка ниже. Если нужного клиента нет, воспользуйтесь формой поиска.'
     form = ClientSearchForm()
-    client_by_phone = None
+    clients_by_phone_name = list()
     client_found = False
     page = request.args.get('page',1,type=int)
     clients = Client.query \
@@ -490,31 +509,31 @@ def add_visit_booking():
             phone = form.phone.data
             name = form.name.data
             if len(phone) > 0:#ищем по телефону
-                client_by_phone = Client.query.filter(Client.phone == phone).first()
-                if client_by_phone is None and len(name) > 0:#по телефону не нашли, но есть имя
-                    all_clients = Client.query.all()
-                    for c in all_clients:
-                        if c.name.upper() == name.upper():
-                            client_by_phone = c
-                            break
+                c = Client.query.filter(Client.phone == phone).first()
+                if c is not None:
+                    clients_by_phone_name.append(c)
+                    client_found = True
+                if c is None and len(name) > 0:#по телефону не нашли, но есть имя
+                    clients_by_phone_name = search_client_by_name(name)
+                    if len(clients_by_phone_name) > 0:
+                        client_found = True
             elif len(name) > 0:#ищем по имени
-                all_clients = Client.query.all()
-                for c in all_clients:
-                    if c.name.upper() == name.upper():
-                        client_by_phone = c
-                        break
+                clients_by_phone_name = search_client_by_name(name)
+                if len(clients_by_phone_name) > 0:
+                    client_found = True
             else:
                 flash('Для поиска нужно заполнить хотя бы одно поле')
                 return redirect(url_for('admin.add_visit_booking'))
-            if client_by_phone is not None:
-                client_found = True
+            if client_found and len(clients_by_phone_name) == 1:                
                 flash('Клиент найден!')
+            elif client_found and len(clients_by_phone_name) > 1:
+                flash('Найдено несколько подходящих клиентов, см. ниже')
             else:                
                 flash('Клиент с указанным номером / именем не найден в базе. Его нужно создать.')
         except:
             flash('Не удалось выполнить поиск.')
     return render_template('admin/add_visit_booking.html',title=title,descr=descr,clients=clients.items,\
-                    form=form,client_found=client_found,client_by_phone=client_by_phone, \
+                    form=form,client_found=client_found,clients_by_phone_name=clients_by_phone_name, \
                     next_url=next_url,prev_url=prev_url)
 
 
