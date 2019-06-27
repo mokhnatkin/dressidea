@@ -55,9 +55,13 @@
                         </td>
                         <td>{{ b.comment }}</td>
                         <td>
-                            {% if b.attended == None %}
+                            {% if current_user.role == 'admin' %}
                                 <a href="{{ url_for('admin.edit_booking',booking_id=b.id) }}">Изменить</a>
-                            {% endif %}                
+                            {% else %}
+                                {% if b.attended == None %}
+                                    <a href="{{ url_for('admin.edit_booking',booking_id=b.id) }}">Изменить</a>
+                                {% endif %}
+                            {% endif %}
                         </td>
                         {% if current_user.role == 'admin' %}
                             <td><a href="{{ url_for('admin.delete_booking',booking_id=b.id) }}">Удалить</a></td>
