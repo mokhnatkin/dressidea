@@ -848,6 +848,7 @@ def compute_stat(visits):#вспомогательная функция - инф
     sum = 0
     dates = dict()
     clients = dict()
+    promos = dict()
     for v in visits:
         count += 1
         sum += v.amount
@@ -860,7 +861,12 @@ def compute_stat(visits):#вспомогательная функция - инф
         if client_id in clients:
             clients[client_id] += 1
         else:
-            clients[client_id] = 1            
+            clients[client_id] = 1
+        promo_id = v.promo_id
+        if promo_id in promos:
+            promos[promo_id] += 1
+        else:
+            promos[promo_id] = 1
     total_stat = {'count':count,'sum':round(sum),'av_check':round((sum/count))}
     stat_per_day = list()
     for key,val in dates.items():
@@ -878,8 +884,26 @@ def compute_stat(visits):#вспомогательная функция - инф
                 amount += v.amount
         c = {'client_id':key,'count':val,'sum':round(amount)}
         stat_per_client.append(c)
-        stat_per_client.sort(key=lambda x: x['sum'], reverse=True)#сортируем по убыванию
-    return total_stat, stat_per_day, stat_per_client
+    stat_per_client.sort(key=lambda x: x['sum'], reverse=True)#сортируем по убыванию
+    stat_per_promo = list()
+    for key,val in promos.items():
+        amount = 0
+        for v in visits:
+            if v.promo_id == key:
+                amount += v.amount
+        c = {'promo_id':key,'count':val,'sum':round(amount)}
+        stat_per_promo.append(c)
+    stat_per_promo.sort(key=lambda x: x['sum'], reverse=True)#сортируем по убыванию
+    return total_stat, stat_per_day, stat_per_client, stat_per_promo
+
+
+def get_promo_name_by_id(_id):
+    if _id is None:
+        name = 'Стандартный визит'
+    else:
+        promo = Promo.query.filter(Promo.id == _id).first()
+        name = promo.name
+    return name
 
 
 @bp.route('/stat',methods=['GET', 'POST'])#статистика за заданный период
@@ -893,6 +917,7 @@ def stat():
     total_stat = None
     stat_per_day = None
     stat_per_client = None
+    stat_per_promo = None
     bookings_stat = None
     if form.validate_on_submit():
         begin_date = form.begin_d.data        
@@ -902,7 +927,7 @@ def stat():
                 .filter(Visit.end != None) \
                 .filter(Visit.begin >= begin_date) \
                 .filter(Visit.begin < end_date).all()
-            total_stat, stat_per_day, stat_per_client = compute_stat(visits)
+            total_stat, stat_per_day, stat_per_client, stat_per_promo = compute_stat(visits)
             bookings = Booking.query \
                 .filter(Booking.begin >= begin_date) \
                 .filter(Booking.begin < end_date).all()
@@ -913,7 +938,8 @@ def stat():
     return render_template('admin/stat.html',title=title,form=form,descr=descr,show_stat=show_stat,\
                                         total_stat=total_stat,stat_per_day=stat_per_day, \
                                         len=len,stat_per_client=stat_per_client, \
-                                        get_client_by_id=get_client_by_id, bookings_stat=bookings_stat)
+                                        get_client_by_id=get_client_by_id, bookings_stat=bookings_stat, \
+                                        stat_per_promo=stat_per_promo,get_promo_name_by_id=get_promo_name_by_id)
 
 
 @bp.route('/delete_visit/<visit_id>')#удалить визит
