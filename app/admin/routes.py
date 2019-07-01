@@ -7,7 +7,7 @@ from app.admin.forms import PhotoUploadForm, Const_adminForm, \
                     Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
                     ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
                     PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
-                    ConfirmGroupVisitAmountForm, EditVisitAmountForm
+                    ConfirmVisitAmountForm, EditVisitAmountForm
 from flask_login import current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
@@ -459,17 +459,18 @@ def client_info(client_id=None):
     client = Client.query.filter(Client.id == client_id).first()
     visits = Visit.query.filter(Visit.client_id == client_id) \
                         .filter(Visit.end != None) \
-                        .order_by(Visit.begin).all()                        
+                        .order_by(Visit.begin).all()
     if visits is not None and len(visits)>0:
         show_visits = True
-        total_stat, stat_per_day, stat_per_client = compute_stat(visits)
+        total_stat, stat_per_day, stat_per_client, stat_per_promo = compute_stat(visits)
     bookings = Booking.query.filter(Booking.client_id == client_id) \
                         .order_by(Booking.begin).all()
     if bookings is not None and len(bookings)>0:
         show_bookings = True                        
     return render_template('admin/client_info.html',title=title,descr=descr,client=client,\
                             show_visits=show_visits,visits=visits,show_source_name=show_source_name, \
-                            show_bookings=show_bookings,bookings=bookings,total_stat=total_stat)
+                            show_bookings=show_bookings,bookings=bookings,total_stat=total_stat, \
+                            get_promo_name=get_promo_name)
 
 
 def search_client_by_name(name):#неточный поиск клиента по имени
@@ -618,17 +619,21 @@ def compute_amount_no_promo(begin,param):#рассчитать стоимост�
     return amount
 
 
-def compute_amount(begin,promo_id):#рассчитать стоимость визита    
-    if promo_id:#выбрана акция
+def compute_amount(begin,promo_id):#рассчитать стоимость визита
+    amount = 0
+    promo_name = None
+    if promo_id:
         promo = Promo.query.filter(Promo.id == promo_id).first()
-        if get_promo_type_name(promo.promo_type) in ('fix_value','group_visit'):#фиксированная цена или групповой визит
+        promo_name = get_promo_type_name(promo.promo_type)
+    if promo_id and promo_name != 'individual':#выбрана акция, но не индивид        
+        if promo_name in ('fix_value','group_visit'):#фиксированная цена или групповой визит
             amount = promo.value
-        elif get_promo_type_name(promo.promo_type) == 'discount':#скидка
+        elif promo_name == 'discount':#скидка
             coef = (1-promo.value / 100)
             amount = compute_amount_no_promo(begin,'standard') * coef
-        elif get_promo_type_name(promo.promo_type) == 'group_visit_by_hours':#групповой - по часам
+        elif promo_name == 'group_visit_by_hours':#групповой - по часам
             amount = compute_amount_no_promo(begin,'group_by_hours')
-    else:
+    else:#стандартный визит или индивидуальная оплата
         amount = compute_amount_no_promo(begin,'standard')
     return amount
 
@@ -648,6 +653,10 @@ def get_promo_name(promo_id):
         if p.id == promo_id:
             res = p.name
     return res
+
+
+def get_now():#для получения текущего времени
+    return datetime.utcnow()
 
 
 @bp.route('/visits_today/<param>')#визиты
@@ -675,7 +684,7 @@ def visits_today(param=None):
     return render_template('admin/visits_today.html',title=title,visits=visits, \
                             time_live=time_live,compute_amount=compute_amount, \
                             get_promo_name=get_promo_name, descr=descr,param=param, \
-                            get_now=datetime.utcnow)
+                            get_now=get_now)
 
 
 @bp.route('/close_visit/<visit_id>')#завершить визит
@@ -684,8 +693,12 @@ def close_visit(visit_id=None):
     visit = Visit.query.filter(Visit.id == visit_id).first()
     if visit.promo_id:
         promo = Promo.query.filter(Promo.id == visit.promo_id).first()
-        if get_promo_type_name(promo.promo_type) == 'group_visit':#подтвердить стоимость группового визита
-            return redirect(url_for('admin.confirm_and_close_group_visit',visit_id=visit_id,amount=promo.value))
+        if get_promo_type_name(promo.promo_type) in ('group_visit','individual'):#изменить / подтвердить стоимость визита
+            if get_promo_type_name(promo.promo_type) == 'group_visit':
+                return redirect(url_for('admin.confirm_and_close_visit',visit_id=visit_id,amount=promo.value))
+            else:
+                amount = compute_amount(visit.begin,visit.promo_id)
+                return redirect(url_for('admin.confirm_and_close_visit',visit_id=visit_id,amount=amount))            
     amount = compute_amount(visit.begin,visit.promo_id)
     visit.amount = amount
     visit.end = datetime.utcnow()
@@ -693,12 +706,12 @@ def close_visit(visit_id=None):
     return redirect(url_for('admin.visits_today',param='today'))
 
 
-@bp.route('/confirm_and_close_group_visit/<visit_id>/<amount>',methods=['GET', 'POST'])#подтверждаем и закрываем групповой визит
+@bp.route('/confirm_and_close_visit/<visit_id>/<amount>',methods=['GET', 'POST'])#подтверждаем и закрываем групповой визит
 @login_required
-def confirm_and_close_group_visit(visit_id,amount):
-    title='Подтвердить и закрыть групповой визит'
-    form = ConfirmGroupVisitAmountForm()
-    h1_txt = 'Подтвердить сумму и закрыть групповой визит'
+def confirm_and_close_visit(visit_id,amount):
+    title='Подтвердить и закрыть визит'
+    form = ConfirmVisitAmountForm()
+    h1_txt = 'Подтвердить сумму и закрыть визит'
     visit = Visit.query.filter(Visit.id == visit_id).first()
     if request.method == 'GET':
         form.amount.data = float(amount)

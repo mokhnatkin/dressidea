@@ -17,8 +17,8 @@ class Config(object):
     PHOTO_ALBUMS_FOLDER = os.environ.get('PHOTO_ALBUMS_FOLDER')
     V_TYPES = {'video':0,'photo':1}#типы мастер-классов
     V_TYPES_STR = [('video','Видео (youtube)'),('photo','Фото (карусель)')]#типы мастер-классов (для отображения)
-    PROMO_TYPES = {'not_set':0,'fix_value':1,'discount':2,'group_visit':3,'group_visit_by_hours':4}#типы и id промо акций
-    PROMO_TYPES_STR = [('fix_value','Фиксированный чек'),('discount','Скидка'),('group_visit','Групповой визит'),('group_visit_by_hours','Групповой визит по часам')]
+    PROMO_TYPES = {'not_set':0,'fix_value':1,'discount':2,'group_visit':3,'group_visit_by_hours':4,'individual':5}#типы и id промо акций
+    PROMO_TYPES_STR = [('fix_value','Фиксированный чек'),('discount','Скидка'),('group_visit','Групповой визит'),('group_visit_by_hours','Групповой визит по часам'),('individual','Индивидуальная оплата')]
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')#where to send emails from site
     SENDER_EMAIL = os.environ.get('SENDER_EMAIL')#sender of sys emails
     MAIL_SERVER = os.environ.get('MAIL_SERVER')

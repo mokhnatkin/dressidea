@@ -166,8 +166,8 @@ class PromoForm(FlaskForm):#добавить промо акции
     submit = SubmitField('Добавить / Изменить')
 
 
-class ConfirmGroupVisitAmountForm(FlaskForm):#подтвердить стоимость группового визита
-    amount = DecimalField('Сумма',validators=[DataRequired()])
+class ConfirmVisitAmountForm(FlaskForm):#подтвердить стоимость визита
+    amount = DecimalField('Сумма')
     submit = SubmitField('Подтвердить сумму и закрыть визит')
 
 

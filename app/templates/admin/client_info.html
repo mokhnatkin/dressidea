@@ -41,24 +41,40 @@
     {% if show_visits %}
         <h2>Завершенные визиты</h2>
         {% if total_stat %}
-            <div class="row">
-                <p>Визитов: <b> {{ total_stat.count }}</b></p>
-                <p>Сумма: <b>{{ "{:,.0f}".format(total_stat.sum) }}</b></p>
-            </div>
-        {% endif %}        
+        <h3>Итого по визитам</h3>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <tr>
+                    <td>Кол-во визитов</th>
+                    <td><b> {{ total_stat.count }}</b></th>                  
+                </tr>
+                <tr>
+                    <td>Сумма</th>
+                    <td><b> {{ "{:,.0f}".format(total_stat.sum) }}</b></th>                  
+                </tr>                
+            </table>
+        </div>
+        {% endif %}
+        <h3>Список визитов</h3>
         <div class="table-responsive">
             <table class="table table-hover">
                 <tr>
                     <th>Начало</th>
                     <th>Окончание</th>
                     <th>Окончательная стоимость</th>
-                    <th>Комментарий</th>                    
+                    <th>Акция</th>                    
+                    <th>Комментарий</th>
                 </tr>
                 {% for v in visits %}
                 <tr>
                     <td>{{ moment(v.begin).format('LLL') }}</td>
                     <td>{{ moment(v.end).format('LLL') }}</td>
                     <td>{{ "{:,.0f}".format(v.amount) }}</td>
+                    <td>
+                        {% if v.promo_id %}
+                            {{ get_promo_name(v.promo_id) }}
+                        {% endif %}
+                    </td>
                     <td>{{ v.comment }}</td>
                 </tr>
                 {% endfor %}
