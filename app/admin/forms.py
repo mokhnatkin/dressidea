@@ -5,7 +5,7 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
                 DateTimeField, MultipleFileField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from app.models import User, ClientSource, VideoCategory, Promo
+from app.models import User, ClientSource, VideoCategory, Promo, Client
 from wtforms.fields.html5 import DateField, TimeField
 
 
@@ -97,26 +97,11 @@ class ClientForm(FlaskForm):#добавляем клиента
     insta = StringField('Instagram; образец dressidea_coworking',validators=[Length(max=50)])
     source = SelectField('Откуда пришел клиент?',choices = [])
     comment = TextAreaField('Комментарий',validators=[Length(max=200)])
-    submit = SubmitField('Добавить')
+    can_place_orders = BooleanField(label='Отображать в списке при создании заказа')
+    submit = SubmitField('Добавить / изменить')
 
     def __init__(self, *args, **kwargs):
         super(ClientForm, self).__init__(*args, **kwargs)
-        s_1 = [('not_set','--не указано--')]
-        sources_db = [(str(a.id), a.name) for a in ClientSource.query.filter(ClientSource.active==True)]
-        sources = s_1 + sources_db
-        self.source.choices = sources
-
-
-class ClientChangeForm(FlaskForm):#изменяем данные клиента
-    name = StringField('Имя',validators=[DataRequired(), Length(min=1,max=50)])
-    phone = StringField('Мобильный телефон; образец 87017166243',validators=[DataRequired(), Length(min=11,max=11)])
-    insta = StringField('Instagram; образец @dressidea_coworking',validators=[Length(max=50)])
-    source = SelectField('Откуда пришел клиент?',choices = [])
-    comment = TextAreaField('Комментарий',validators=[Length(max=200)])
-    submit = SubmitField('Изменить')
-
-    def __init__(self, *args, **kwargs):
-        super(ClientChangeForm, self).__init__(*args, **kwargs)
         s_1 = [('not_set','--не указано--')]
         sources_db = [(str(a.id), a.name) for a in ClientSource.query.filter(ClientSource.active==True)]
         sources = s_1 + sources_db
@@ -183,6 +168,32 @@ class EditVisitAmountForm(FlaskForm):#изменить стоимость виз
         promos_db = [(str(a.id), a.name) for a in Promo.query.filter(Promo.active==True)]
         promos = s_1 + promos_db
         self.promo_id.choices = promos
+
+
+class OrderForm(FlaskForm):#добавляем заказ
+    client_id = SelectField('Клиент',choices = [])
+    name = StringField('Название заказа',validators=[DataRequired(),Length(min=1,max=100)])
+    description = TextAreaField('Описание заказа')
+    begin = DateField('Дата приёма', format='%Y-%m-%d',validators=[DataRequired()])
+    submit = SubmitField('Добавить заказ')
+
+    def __init__(self, *args, **kwargs):
+        super(OrderForm, self).__init__(*args, **kwargs)
+        s_1 = [('not_set','--выберите клиента--')]
+        clients_db = [(str(a.id), a.name+', тел.'+a.phone) for a in Client.query.filter(Client.can_place_orders==True).all()]
+        clients = s_1 + clients_db
+        self.client_id.choices = clients
     
 
-   
+class EditOrderForm(FlaskForm):#меняем заказ
+    statuses = current_app.config['ORDER_STATUS']
+    name = StringField('Название заказа',validators=[DataRequired(),Length(min=1,max=100)])
+    status = SelectField('Статус',choices = statuses)
+    description = TextAreaField('Описание заказа')
+    begin = DateField('Дата приёма', format='%Y-%m-%d',validators=[DataRequired()])
+    end = DateField('Дата сдачи', format='%Y-%m-%d',validators=[DataRequired()])
+    amount = DecimalField('Стоимость')
+    submit = SubmitField('Изменить / закрыть заказ')
+
+
+  

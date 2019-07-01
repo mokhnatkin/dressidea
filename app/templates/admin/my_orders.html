@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<h1>Список моих заказов</h1>
+<h3>{{ descr }}</h3>
+<div>
+    <a href="{{ url_for('admin.add_order') }}" class="btn btn-success" role="button" style="margin: 10px;">Добавить заказ</a>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>Клиент</th>
+                <th>Телефон</th>
+                <th>Название заказа</th>
+                <th>Дата приема</th>
+                <th>Дата сдачи</th>
+                <th>Стоимость</th>
+                <th>Статус</th>
+                <th>Изменить / закрыть</th>
+                {% if current_user.role == 'admin' %}
+                    <th>Удалить</th>
+                {% endif %}
+            </tr>
+            {% if orders %}
+                {% for el in orders %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.client_info',client_id=el.client_id) }}">{{ el.client_name }}</a></td>
+                        <td>{{ el.phone }}</td>
+                        <td>{{ el.name }}</td>
+                        <td>{{ moment(el.begin).format('LL') }}</td>
+                        <td>{% if el.end %}
+                                {{ moment(el.end).format('LL') }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if el.amount %}
+                                {{ "{:,.0f}".format(el.amount) }}
+                            {% endif %}
+                        </td>
+                        <td>{{ get_order_status_name(el.status) }}</td>
+                        <td><a href="{{ url_for('admin.edit_order',order_id=el.id) }}">Изменить / закрыть</a></td>
+                        {% if current_user.role == 'admin' %}
+                            <td>
+                                <a href="{{ url_for('admin.delete_order',order_id=el.id) }}">Удалить</a>
+                            </td>
+                        {% endif %}                        
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}

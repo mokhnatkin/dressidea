@@ -2,12 +2,13 @@ from app import db
 from flask import render_template, flash, redirect, url_for, request, g, \
                     send_file, send_from_directory, current_app
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
-                        Client, Visit, Booking, Video, VideoCategory, Promo, QuestionFromSite                    
+                        Client, Visit, Booking, Video, VideoCategory, Promo, \
+                        QuestionFromSite, Order
 from app.admin.forms import PhotoUploadForm, Const_adminForm, \
                     Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
-                    ClientForm, VisitForm, BookingForm, ClientSearchForm, ClientChangeForm, \
+                    ClientForm, VisitForm, BookingForm, ClientSearchForm, \
                     PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
-                    ConfirmVisitAmountForm, EditVisitAmountForm
+                    ConfirmVisitAmountForm, EditVisitAmountForm, OrderForm, EditOrderForm
 from flask_login import current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
@@ -401,13 +402,13 @@ def add_client():
         name = form.name.data
         if phone_already_in_DB is None:
             if form.source.data == 'not_set':
-                client = Client(name=name.strip(),phone=phone,insta=form.insta.data,comment=form.comment.data)
+                client = Client(name=name.strip(),phone=phone,insta=form.insta.data,comment=form.comment.data,can_place_orders=form.can_place_orders.data)
             else:
                 try:
                     source_id = int(form.source.data)
-                    client = Client(name=name.strip(),phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data)                    
+                    client = Client(name=name.strip(),phone=phone,insta=form.insta.data,source_id=source_id,comment=form.comment.data,can_place_orders=form.can_place_orders.data)                    
                 except:
-                    client = Client(name=name.strip(),phone=phone,insta=form.insta.data,comment=form.comment.data)                    
+                    client = Client(name=name.strip(),phone=phone,insta=form.insta.data,comment=form.comment.data,can_place_orders=form.can_place_orders.data)                    
                     flash('Не получилось получить id канала. Клиент будет создан без указания канала.')
             db.session.add(client)
             db.session.commit()
@@ -789,10 +790,10 @@ def change_client_info(client_id=None):
     title = 'Изменить данные клиента'
     descr = 'Здесь можно изменить данные клиента.'
     h1_txt = 'Изменить данные клиента'    
-    form = ClientChangeForm()
+    form = ClientForm()
     client = Client.query.filter(Client.id == client_id).first()
     if request.method == 'GET':
-        form = ClientChangeForm(obj=client)
+        form = ClientForm(obj=client)
         if client.source_id is not None:            
             form.source.data = str(client.source_id)
     if form.validate_on_submit():
@@ -803,6 +804,7 @@ def change_client_info(client_id=None):
         if source_id != 'not_set':
             client.source_id = source_id
         client.comment = form.comment.data
+        client.can_place_orders = form.can_place_orders.data
         db.session.commit()
         flash('Данные клиента изменены!')
         return redirect(url_for('admin.clients'))
@@ -1292,3 +1294,106 @@ def question(q_id):
                 .filter(QuestionFromSite.id == int(q_id)).first()
     return render_template('admin/question.html',title=title,question=question)
 
+#all possible order statuses
+order_statuses = current_app.config['ORDER_STATUS']
+def get_order_status_id(param):#id статуса заказа для сохранения в БД
+    res = None
+    if param == 'new':
+        res = order_statuses[0][0]#новый заказ
+    elif param == 'done':
+        res = order_statuses[1][0]#выполненный заказ
+    elif param == 'canceled':
+        res = order_statuses[2][0]#отмененный заказ
+    return res
+
+
+def get_order_status_name(param):#статус заказа для отображения
+    res = None
+    if param == order_statuses[0][0]:
+        res = order_statuses[0][1]#новый заказ
+    elif param == order_statuses[1][0]:
+        res = order_statuses[1][1]#выполненный заказ
+    elif param == order_statuses[2][0]:
+        res = order_statuses[2][1]#отмененный заказ
+    return res
+
+
+@bp.route('/add_order',methods=['GET','POST'])#добавить заказ
+@login_required
+def add_order():
+    title='Добавить заказ'
+    descr = 'Здесь можно добавить мой заказ'
+    h1_txt = 'Добавить заказ'
+    form = OrderForm()
+    if form.validate_on_submit():
+        client_id = form.client_id.data
+        name = form.name.data
+        description = form.description.data
+        begin = form.begin.data
+        cur_order_status = get_order_status_id('new')
+        if client_id is None or client_id == 'not_set':
+            flash('Укажите клиента')
+            return redirect(url_for('admin.add_order'))
+        else:
+            order = Order(name=name,description=description,begin=begin,status=cur_order_status,client_id=client_id)
+            db.session.add(order)
+            db.session.commit()
+            flash('Заказ добавлен.')
+            return redirect(url_for('admin.my_orders'))
+    return render_template('admin/add_edit_DB_item.html',title=title, \
+                            h1_txt=h1_txt,descr=descr,form=form)
+
+
+@bp.route('/my_orders')#мои заказы
+@login_required
+def my_orders():
+    title = 'Список моих заказов'
+    descr = 'Список моих швейных заказов'
+    orders = Order.query.join(Client) \
+                .with_entities(Order.id, Order.client_id, Order.name, Order.begin, Order.amount, \
+                    Order.end, Order.status, Client.name.label('client_name'), Client.phone) \
+                .order_by(Order.begin.desc()).all()
+    return render_template('admin/my_orders.html',title=title,orders=orders, \
+                    descr=descr,get_order_status_name=get_order_status_name)
+
+
+@bp.route('/edit_order/<order_id>',methods=['GET', 'POST'])#изменить заказ
+@login_required
+def edit_order(order_id = None):
+    title='Изменить заказ'
+    form = EditOrderForm()
+    descr = 'Здесь можно изменить / закрыть швейный заказ'
+    item = Order.query.filter(Order.id == order_id).first()
+    if request.method == 'GET':
+        form = EditOrderForm(obj=item)
+    if form.validate_on_submit():
+        item.name = form.name.data
+        item.description = form.description.data
+        item.amount = form.amount.data
+        item.begin = form.begin.data
+        item.end = form.end.data
+        item.name = form.name.data
+        item.status = form.status.data
+        db.session.commit()
+        flash('Заказ изменен!')
+        return redirect(url_for('admin.my_orders'))
+    return render_template('admin/add_edit_DB_item.html', title=title,form=form,descr=descr)
+
+
+@bp.route('/delete_order/<order_id>')#удалить заказ
+@login_required
+@required_roles('admin')
+def delete_order(order_id = None):
+    item = Order.query.filter(Order.id == order_id).first()
+    if item is not None:
+        try:
+            db.session.delete(item)
+            db.session.commit()
+            flash('Заказ удалён')                
+        except:
+            flash('Не удалось удалить заказ.')
+            return redirect(url_for('admin.my_orders'))
+    else:
+        flash('Заказ для удаления не найден. Возможно, он уже был удалён ранее.')
+        return redirect(url_for('admin.my_orders'))
+    return redirect(url_for('admin.my_orders'))

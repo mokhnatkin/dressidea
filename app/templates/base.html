@@ -83,6 +83,7 @@
                     <li><a class="navbar-brand" href="{{ url_for('admin.add_video') }}">+ мастер-класс</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('admin.video_list') }}">Мастер-классы</a></li>
                     <li><a class="navbar-brand" href="{{ url_for('admin.all_questions') }}">Вопросы</a></li>
+                    <li><a class="navbar-brand" href="{{ url_for('admin.my_orders') }}">Заказы</a></li>                    
                     {% if current_user.role == 'admin' %}
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

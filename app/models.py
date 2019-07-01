@@ -68,8 +68,10 @@ class Client(db.Model):#карточка клиента
     source_id = db.Column(db.Integer,db.ForeignKey('client_source.id'))
     timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
     comment = db.Column(db.String(200))
+    can_place_orders = db.Column(db.Boolean)
     bookings = db.relationship('Booking',backref='client',lazy='dynamic')
     visits = db.relationship('Visit',backref='client',lazy='dynamic')
+    visits = db.relationship('Order',backref='client',lazy='dynamic')
 
     def __repr__(self):
         return '<Client {}>'.format(self.name)
@@ -132,7 +134,7 @@ class Video(db.Model):#ссылки на мастер классы
 class Promo(db.Model):#промо акции
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    promo_type = db.Column(db.Integer,nullable=False)#fix/discount/group/group_by_hours
+    promo_type = db.Column(db.Integer,nullable=False)#fix/discount/group/group_by_hours/individual
     value = db.Column(db.Float,nullable=False)
     active = db.Column(db.Boolean)
     visits = db.relationship('Visit',backref='promo',lazy='dynamic')
@@ -144,6 +146,18 @@ class QuestionFromSite(db.Model):#вопрос с сайта
     phone = db.Column(db.String(20),index=True, nullable=False)    
     timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
     question = db.Column(db.String(1000))
+
+
+class Order(db.Model):#мои заказы
+    id = db.Column(db.Integer,primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(10), nullable=False)
+    client_id = db.Column(db.Integer,db.ForeignKey('client.id'))
+    description = db.Column(db.String(1000))
+    begin = db.Column(db.DateTime)
+    end = db.Column(db.DateTime)
+    amount = db.Column(db.Float)
+    timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
 
 
 @login.user_loader
