@@ -1,7 +1,7 @@
 from app import db
 from app.auth import bp
 from flask import render_template, flash, redirect, url_for, request, g
-from app.auth.forms import LoginForm, RegistrationForm
+from app.auth.forms import LoginForm, RegistrationForm, EditUserRoleForm, ChangePasswordForm
 from app.models import User, Const_public, Const_admin
 from flask_login import current_user, login_user, logout_user, login_required
 from functools import wraps
@@ -53,10 +53,43 @@ def logout():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data,email=form.email.data)
+        user = User(username=form.username.data,email=form.email.data,role=form.role.data)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash('Пользователь добавлен!')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html',title='Регистрация',form=form)
+
+
+@bp.route('/edit_user_role/<item_id>',methods=['GET','POST'])#изменить роль пользователя
+@login_required
+@required_roles('admin')
+def edit_user_role(item_id = None):
+    form = EditUserRoleForm()
+    item = User.query.filter(User.id == item_id).first()
+    username = item.username
+    if request.method == 'GET':
+        form = EditUserRoleForm(obj=item)
+    if form.validate_on_submit():
+        item.role = form.role.data
+        db.session.commit()
+        flash('Роль изменена!')        
+        return redirect(url_for('admin.users'))
+    return render_template('auth/edit_user.html',title='Изменить роль пользователя',form=form,username=username)
+
+
+@bp.route('/change_password/<item_id>',methods=['GET','POST'])#сменить пароль
+@login_required
+@required_roles('admin')
+def change_password(item_id = None):
+    form = ChangePasswordForm()
+    item = User.query.filter(User.id == item_id).first()
+    username = item.username
+    if form.validate_on_submit():        
+        item.set_password(form.password.data)
+        db.session.add(item)
+        db.session.commit()
+        flash('Пароль изменен!')
+        return redirect(url_for('admin.users'))
+    return render_template('auth/edit_user.html',title='Изменить пароль',form=form,username=username)

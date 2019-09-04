@@ -27,3 +27,4 @@ class Config(object):
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     ORDER_STATUS = [('new','Новый заказ'),('done','Выполнен'),('canceled','Отменен')]
+    USER_ROLES = [('user','Помощник'),('admin','Администратор'),('director','Директор')]

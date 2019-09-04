@@ -1,4 +1,4 @@
-from flask_wtf import FlaskForm
+﻿from flask_wtf import FlaskForm
 from flask import current_app
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
                 TextAreaField, SelectField, DecimalField, IntegerField, \
@@ -26,7 +26,7 @@ class PhotoEditForm(FlaskForm):#редактировать фото
     photo_type = SelectField(label='Куда загрузить фото',choices = photo_types)
     caption = StringField('Заголовок')
     descr = StringField('Описание')    
-    submit = SubmitField('Изменить')    
+    submit = SubmitField('Изменить')
 
 
 class Const_adminForm(FlaskForm):#константы админки

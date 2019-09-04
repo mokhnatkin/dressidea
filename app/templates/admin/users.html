@@ -10,19 +10,15 @@
                 <th>e-mail</th>
                 <th>Роль</th>
                 <th>Изменить роль</th>
+                <th>Изменить пароль</th>
             </tr>
             {% for u in users %}
             <tr>
                 <td>{{ u.username }}</td>
                 <td>{{ u.email }}</td>
                 <td>{{ u.role }}</td>
-                <td>
-                    {% if u.role == 'admin' %}
-                        <a href="{{ url_for('admin.give_user_role',uid=u.id) }}">Разжаловать в обычные пользователи</a>
-                    {% else %}
-                        <a href="{{ url_for('admin.give_admin_role',uid=u.id) }}">Сделать админом</a>
-                    {% endif %}                
-                </td>
+                <td><a href="{{ url_for('auth.edit_user_role',item_id=u.id) }}">Изменить роль</a></td>
+                <td><a href="{{ url_for('auth.change_password',item_id=u.id) }}">Изменить пароль</a></td>
             </tr>
             {% endfor %}
         </table>

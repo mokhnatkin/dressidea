@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField                
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo
 from app.models import User
+from flask import current_app
 
 
 class LoginForm(FlaskForm):#вход
@@ -12,10 +13,12 @@ class LoginForm(FlaskForm):#вход
 
 
 class RegistrationForm(FlaskForm):#зарегистрироваться
+    roles = current_app.config['USER_ROLES']
     username = StringField('Логин',validators=[DataRequired()])
     email = StringField('E-mail',validators=[DataRequired(), Email()])
     password = PasswordField('Пароль',validators=[DataRequired()])
     password2 = PasswordField('Повторите пароль',validators=[DataRequired(), EqualTo('password')])
+    role = SelectField(label='Роль',choices = roles)
     submit = SubmitField('Добавить')
 
     def validate_username(self,username):
@@ -27,3 +30,16 @@ class RegistrationForm(FlaskForm):#зарегистрироваться
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
             raise ValidationError('Пользователь с таким e-mail адресом уже зарегистрирован.')
+
+
+class EditUserRoleForm(FlaskForm):#изменить роль пользователя
+    roles = current_app.config['USER_ROLES']   
+    role = SelectField(label='Роль',choices = roles)    
+    submit = SubmitField('Изменить')
+
+
+class ChangePasswordForm(FlaskForm):#сменить пароль    
+    password = PasswordField('Пароль',validators=[DataRequired()])
+    password2 = PasswordField('Повторите пароль',validators=[DataRequired(), EqualTo('password')])    
+    submit = SubmitField('Изменить пароль')
+

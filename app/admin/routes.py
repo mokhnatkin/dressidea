@@ -44,7 +44,7 @@ def add_str_timestamp(filename):#adds string timestamp to filename in order to m
 
 @bp.route('/upload_file',methods=['GET', 'POST'])#загрузить фото
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def upload_file():
     title = 'Загрузка фото'
     form = PhotoUploadForm()
@@ -66,7 +66,7 @@ def upload_file():
 
 @bp.route('/delete_file/<fid>')#физически удалить фото
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def delete_file(fid = None):
     photo = Photo.query.filter(Photo.id == fid).first()
     if photo is not None:
@@ -90,7 +90,7 @@ def delete_file(fid = None):
 
 @bp.route('/edit_file/<fid>',methods=['GET', 'POST'])#изменить фото
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def edit_file(fid = None):
     title = 'Редактирование типа и описания фото'
     form = PhotoEditForm()
@@ -112,7 +112,7 @@ def edit_file(fid = None):
 
 @bp.route('/files/<param>/<album_name>')#список загруженных фото
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def files(param,album_name=None):
     if param == 'all':
         files = Photo.query.all()
@@ -147,7 +147,7 @@ def get_path_to_static_photo_albums(album_name,fname):
 
 @bp.route('/activate_files/<fid>')#активировать фото для отображения на сайте
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def activateFile(fid = None):
     f = Photo.query.filter(Photo.id == fid).first()    
     try:        
@@ -161,7 +161,7 @@ def activateFile(fid = None):
 
 @bp.route('/deactivate_files/<fid>')#активировать фото для отображения на сайте
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def deactivateFile(fid = None):
     f = Photo.query.filter(Photo.id == fid).first()    
     try:        
@@ -175,7 +175,7 @@ def deactivateFile(fid = None):
 
 @bp.route('/const_admin',methods=['GET', 'POST'])#константы для админки
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def const_admin():
     title='Константы админки'
     form = Const_adminForm()
@@ -210,7 +210,7 @@ def const_admin():
 
 @bp.route('/const_public',methods=['GET', 'POST'])#константы для паблика
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def const_public():
     title='Константы паблика'
     form = Const_publicForm()
@@ -260,35 +260,9 @@ def users():
     return render_template('admin/users.html', title=title, users=users)
 
 
-@bp.route('/give_admin_role/<uid>')#присвоить пользователю роль admin
-@login_required
-@required_roles('admin')
-def give_admin_role(uid = None):
-    u = User.query.filter(User.id == uid).first()    
-    try:
-        u.role = 'admin'
-        db.session.commit()        
-    except:
-        flash('Не удалось сменить роль')
-    return redirect(url_for('admin.users'))
-
-
-@bp.route('/give_user_role/<uid>')#присвоить пользователю роль user
-@login_required
-@required_roles('admin')
-def give_user_role(uid = None):
-    u = User.query.filter(User.id == uid).first()    
-    try:
-        u.role = 'user'
-        db.session.commit()        
-    except:
-        flash('Не удалось сменить роль')
-    return redirect(url_for('admin.users'))
-
-
 @bp.route('/edit_item_inside/<item_id>',methods=['GET', 'POST'])#предменты в коворкинге (списком на главной)
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def edit_item_inside(item_id = None):
     title='Оборудование внутри коворкинга'
     form = ItemInsideForm()
@@ -308,7 +282,7 @@ def edit_item_inside(item_id = None):
 
 @bp.route('/item_inside',methods=['GET','POST'])#дополнить список оборудования
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def item_inside():
     title='Оборудование внутри коворкинга'
     descr = 'Здесь изменяется список оборудования в коворкинге'
@@ -344,7 +318,7 @@ def admin():
 
 @bp.route('/sources',methods=['GET','POST'])#дополнить список источников
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def sources():
     title='Источники (откуда приходят клиенты)'
     descr = 'Здесь администрируются источники (откуда приходят клиенты)'
@@ -369,7 +343,7 @@ def sources():
 
 @bp.route('/edit_source/<item_id>',methods=['GET', 'POST'])#редактируем источники
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def edit_source(item_id = None):
     title='Список источников'
     form = ClientSourceForm()
@@ -786,6 +760,7 @@ def change_booking_status_negative(booking_id=None):
 
 @bp.route('/change_client_info/<client_id>',methods=['GET', 'POST'])#изменить данные клиента
 @login_required
+@required_roles('admin','director')
 def change_client_info(client_id=None):
     title = 'Изменить данные клиента'
     descr = 'Здесь можно изменить данные клиента.'
@@ -814,6 +789,7 @@ def change_client_info(client_id=None):
 
 @bp.route('/edit_booking/<booking_id>',methods=['GET', 'POST'])#изменить данные брони
 @login_required
+@required_roles('admin','director')
 def edit_booking(booking_id=None):
     title = 'Изменить данные брони'
     descr = 'Здесь можно изменить данные брони'
@@ -923,6 +899,7 @@ def get_promo_name_by_id(_id):
 
 @bp.route('/stat',methods=['GET', 'POST'])#статистика за заданный период
 @login_required
+@required_roles('admin','director')
 def stat():
     title = 'Статистика визитов'
     descr = 'Статистика визитов за выбранный период. Укажите нужный период (обе даты включительно).'
@@ -959,7 +936,7 @@ def stat():
 
 @bp.route('/delete_visit/<visit_id>')#удалить визит
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def delete_visit(visit_id = None):
     visit = Visit.query.filter(Visit.id == visit_id).first()
     if visit is not None:
@@ -978,7 +955,7 @@ def delete_visit(visit_id = None):
 
 @bp.route('/delete_client/<client_id>')#удалить клиента
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def delete_client(client_id):
     client = Client.query.filter(Client.id == client_id).first()
     if client is not None:
@@ -1003,7 +980,7 @@ def delete_client(client_id):
 
 @bp.route('/edit_visit/<visit_id>',methods=['GET', 'POST'])#изменить визит
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def edit_visit(visit_id = None):
     form = EditVisitAmountForm()
     h1_txt = 'Изменить визит'
@@ -1023,7 +1000,7 @@ def edit_visit(visit_id = None):
 
 @bp.route('/delete_booking/<booking_id>')#удалить бронь
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def delete_booking(booking_id = None):
     booking = Booking.query.filter(Booking.id == booking_id).first()
     if booking is not None:
@@ -1042,10 +1019,10 @@ def delete_booking(booking_id = None):
 
 @bp.route('/video_category',methods=['GET','POST'])#список категорий видео
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def video_category():
     title='Категории видео'
-    descr = 'Здесь изменяется список оборудования в коворкинге'
+    descr = 'Здесь изменяется список категорий видео'
     form = VideoCategoryForm()
     items = VideoCategory.query.all()
     if form.validate_on_submit():
@@ -1070,9 +1047,9 @@ def video_category():
     return render_template('admin/video_category.html',title=title,descr=descr,form=form,items=items)
 
 
-@bp.route('/edit_video_category/<item_id>',methods=['GET', 'POST'])#предменты в коворкинге (списком на главной)
+@bp.route('/edit_video_category/<item_id>',methods=['GET', 'POST'])#изменить категорию видео
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def edit_video_category(item_id = None):
     title='Категории видео'
     form = VideoCategoryForm()
@@ -1092,6 +1069,7 @@ def edit_video_category(item_id = None):
 
 @bp.route('/add_video',methods=['GET','POST'])#добавить видео
 @login_required
+@required_roles('admin','director')
 def add_video():
     title='Добавить видео мастер-класса'
     descr = 'Здесь можно добавить новое видео / фотоальбом.'
@@ -1138,8 +1116,9 @@ def add_video():
     return render_template('admin/add_video.html',title=title,descr=descr,form=form)
 
 
-@bp.route('/edit_video/<video_id>',methods=['GET', 'POST'])#изменить данные клиента
+@bp.route('/edit_video/<video_id>',methods=['GET', 'POST'])#изменить видео, фото
 @login_required
+@required_roles('admin','director')
 def edit_video(video_id=None):
     title = 'Изменить видео'
     descr = 'Здесь можно изменить видео / фотоальбом. При изменении фотоальбома не меняется название альбома для системы и сами фото.'    
@@ -1166,6 +1145,7 @@ def show_video_cat_name(cat_id):#возвращает имя канала исх
     name = s.name
     return name
 
+
 v_types = current_app.config['V_TYPES']#типы мастер=классов (для системы)
 v_types_str = current_app.config['V_TYPES_STR']#типы мастер=классов (для отображения)
 
@@ -1181,6 +1161,7 @@ def get_video_type_name(video_id):#получаем имя типа мастер
 
 @bp.route('/video_list')#все видео мастер классов
 @login_required
+@required_roles('admin','director')
 def video_list():
     title = 'Список мастер-классов'
     descr = 'Список всех мастер-классов (видео youtube и фотоальбомов)'
@@ -1191,6 +1172,7 @@ def video_list():
 
 @bp.route('/video_per_category/<cat_id>')#все видео мастер классов в данной категории
 @login_required
+@required_roles('admin','director')
 def video_per_category(cat_id = None):
     videos = None    
     try:
@@ -1227,7 +1209,7 @@ def get_promo_type_name(promo_id):#получаем имя типа акции �
 
 @bp.route('/edit_promo/<_id>',methods=['GET', 'POST'])#изменить промоакцию
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def edit_promo(_id):
     title = 'Редактирование промоакции'
     form = PromoForm()
@@ -1251,7 +1233,7 @@ def edit_promo(_id):
 
 @bp.route('/add_promo',methods=['GET','POST'])#добавить промоакцию
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def add_promo():
     title='Добавить акцию'
     descr = 'Здесь можно добавить акцию'
@@ -1270,6 +1252,7 @@ def add_promo():
 
 @bp.route('/promo_list')#список акций
 @login_required
+@required_roles('admin','director')
 def promo_list():
     title = 'Список акций'
     promos = Promo.query.all()
@@ -1279,6 +1262,7 @@ def promo_list():
 
 @bp.route('/all_questions')#список вопросов
 @login_required
+@required_roles('admin','director')
 def all_questions():
     title = 'Список вопросов с сайта'
     questions = QuestionFromSite.query \
@@ -1288,6 +1272,7 @@ def all_questions():
 
 @bp.route('/question/<q_id>')#просмотр вопроса с сайта
 @login_required
+@required_roles('admin','director')
 def question(q_id):
     title = 'Вопрос ' + str(q_id)
     question = QuestionFromSite.query \
@@ -1320,6 +1305,7 @@ def get_order_status_name(param):#статус заказа для отобра�
 
 @bp.route('/add_order',methods=['GET','POST'])#добавить заказ
 @login_required
+@required_roles('admin','director')
 def add_order():
     title='Добавить заказ'
     descr = 'Здесь можно добавить мой заказ'
@@ -1346,6 +1332,7 @@ def add_order():
 
 @bp.route('/my_orders')#мои заказы
 @login_required
+@required_roles('admin','director')
 def my_orders():
     title = 'Список моих заказов'
     descr = 'Список моих швейных заказов'
@@ -1359,6 +1346,7 @@ def my_orders():
 
 @bp.route('/edit_order/<order_id>',methods=['GET', 'POST'])#изменить заказ
 @login_required
+@required_roles('admin','director')
 def edit_order(order_id = None):
     title='Изменить заказ'
     form = EditOrderForm()
@@ -1382,7 +1370,7 @@ def edit_order(order_id = None):
 
 @bp.route('/delete_order/<order_id>')#удалить заказ
 @login_required
-@required_roles('admin')
+@required_roles('admin','director')
 def delete_order(order_id = None):
     item = Order.query.filter(Order.id == order_id).first()
     if item is not None:
