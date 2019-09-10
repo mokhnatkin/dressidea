@@ -21,6 +21,7 @@
                 <th>Источник</th>
                 <th>Создан</th>
                 <th>Комментарий</th>
+                <th>Есть действ. абонемент</th>
                 <th>Изменить данные</th>
                 <th>Удалить</th>
             </tr>
@@ -45,6 +46,13 @@
                         <td>{{ moment(c.timestamp).format('LLL') }}</td>
                         <td>{{ c.comment }}</td>
                         <td>
+                            {% if check_if_client_has_valid_subscriptions(c.id) %}
+                                Да
+                            {% else %}
+                                Нет
+                            {% endif %}
+                        </td>
+                        <td>
                             <a href="{{ url_for('admin.change_client_info',client_id=c.id) }}">Изменить</a>
                         </td>
                         <td>
@@ -56,6 +64,13 @@
                 <tr>
                     <td><a href="{{ url_for('admin.client_info',client_id=client_by_phone.id) }}">{{ client_by_phone.name }}</a></td>
                     <td>{{ client_by_phone.phone }}</td>
+                    <td>
+                        {% if client_by_phone.can_place_orders %}
+                            Да
+                        {% else %}
+                            Нет
+                        {% endif %}
+                    </td>                    
                     <td>{{ client_by_phone.insta }}</td>
                     <td>
                         {% if client_by_phone.source_id %}
@@ -65,8 +80,18 @@
                     <td>{{ moment(client_by_phone.timestamp).format('LLL') }}</td>
                     <td>{{ client_by_phone.comment }}</td>
                     <td>
+                        {% if check_if_client_has_valid_subscriptions(client_by_phone.id) %}
+                            Да
+                        {% else %}
+                            Нет
+                        {% endif %}
+                    </td>
+                    <td>
                         <a href="{{ url_for('admin.change_client_info',client_id=client_by_phone.id) }}">Изменить</a>
                     </td>
+                    <td>
+                        <a href="{{ url_for('admin.delete_client',client_id=client_by_phone.id) }}">Удалить</a>
+                    </td>                    
                 </tr>            
             {% endif %}
         </table>

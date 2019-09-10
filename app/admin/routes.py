@@ -424,7 +424,8 @@ def clients():
             flash('Не удалось выполнить поиск.')    
     return render_template('admin/clients.html',title=title,descr=descr,clients=clients, \
                     show_source_name=show_source_name,form=form,\
-                    client_by_phone=client_by_phone,client_found=client_found)
+                    client_by_phone=client_by_phone,client_found=client_found,
+                    check_if_client_has_valid_subscriptions=check_if_client_has_valid_subscriptions)
 
 
 @bp.route('/client_info/<client_id>')#информация по клиенту
