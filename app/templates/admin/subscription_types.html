@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<h1>Список типов абонементов</h1>
+<h3>{{ descr }}</h3>
+<div>
+    <a href="{{ url_for('admin.add_subscription_type') }}" class="btn btn-success" role="button" style="margin: 10px;">Добавить новый тип абонементов</a>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>ID</th>
+                <th>Тип</th>
+                <th>Название</th>
+                <th>Стоимость</th>
+                <th>Сколько дней действует</th>
+                <th>Сколько часов входит</th>
+                <th>Допустимый диапазон для даты начала</th>
+                <th>Активен?</th>
+                <th>Изменить активность</th>
+               
+            </tr>
+            {% if _types %}
+                {% for t in _types %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.subscriptions',param='given',_type_id=t.id) }}">{{ t.id }}</a></td>
+                        <td>{{ t._type }}</td>
+                        <td>{{ t.name }}</td>
+                        <td>
+                            {% if t.price %}
+                                {{ "{:,.0f}".format(t.price) }}
+                            {% endif %}
+                        </td>
+                        <td>{{ t.days_valid }}</td>
+                        <td>{{ t.hours_valid }}</td>
+                        <td>{{ t.days_gap }}</td>
+                        <td>{% if t.active %}
+                                Да
+                            {% else %}
+                                Нет
+                            {% endif %}
+                        </td>                        
+                        <td>
+                            {% if t.active %}
+                                <a href="{{ url_for('admin.change_subscription_type_active',_id=t.id) }}">Деактивировать</a>
+                            {% else %}
+                                <a href="{{ url_for('admin.change_subscription_type_active',_id=t.id) }}">Активировать</a>
+                            {% endif %}
+                        </td>                         
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}

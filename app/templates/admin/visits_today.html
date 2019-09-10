@@ -18,11 +18,12 @@
                 <th>Телефон</th>
                 <th>Начало</th>
                 <th>Как давно пришел</th>
+                <th>Абонемент</th>
                 <th>Акция</th>
                 <th>Текущая стоимость</th>
                 <th>Завершить</th>
                 <th>Комментарий</th>
-                {% if current_user.role == 'admin' %}                    
+                {% if current_user.role == 'admin' %}
                     <th>Удалить</th>
                 {% endif %}
             </tr>
@@ -32,13 +33,18 @@
                         <td><a href="{{ url_for('admin.client_info',client_id=v.client_id) }}">{{ v.name }}</a></td>
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
-                        <td>{{ time_live(v.begin,get_now()) }}</td>
+                        <td>{{ time_live(v.begin,now_moment) }}</td>
+                        <td>
+                            {% if v.sub_desc %}
+                                {{ v.sub_desc }}
+                            {% endif %}
+                        </td>
                         <td>
                             {% if v.promo_id %}
                                 {{ get_promo_name(v.promo_id) }}
                             {% endif %}
                         </td>
-                        <td>{{ "{:,.0f}".format(compute_amount(v.begin,v.promo_id)) }}</td>
+                        <td>{{ "{:,.0f}".format(compute_amount(v.begin,v.promo_id,v.subscription_id)) }}</td>
                         <td><a href="{{ url_for('admin.close_visit',visit_id=v.id) }}">Завершить</a></td>                        
                         <td>{{ v.comment }}</td>
                         {% if current_user.role == 'admin' %}                            
@@ -57,6 +63,7 @@
                 <th>Телефон</th>
                 <th>Начало</th>
                 <th>Окончание</th>
+                <th>Абонемент</th>
                 <th>Акция</th>
                 <th>Окончательная стоимость</th>
                 {% if param == 'today' %}
@@ -75,6 +82,11 @@
                         <td>{{ v.phone }}</td>
                         <td>{{ moment(v.begin).format('LLL') }}</td>
                         <td>{{ moment(v.end).format('LLL') }}</td>
+                        <td>
+                            {% if v.sub_desc %}
+                                {{ v.sub_desc }}
+                            {% endif %}
+                        </td>
                         <td>
                             {% if v.promo_id %}
                                 {{ get_promo_name(v.promo_id) }}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>Информация по абонементу</h1>
+    {{ descr }}
+    <p></p><p></p>
+
+    <h2>Клиент</h2>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <td><b>Имя клиента</b></td>
+                <td><b><a href="{{ url_for('admin.client_info',client_id=client.id) }}">{{ client.name }}</a></b></td>
+            </tr>
+            <tr>
+                <td>Телефон</td>
+                <td>{{ client.phone }}</td>
+            </tr>            
+            <tr>
+                <td>Комментарий</td>
+                <td>{{ client.comment }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <h2>Абонемент</h2>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <td><b>Номер</b></td>
+                <td><b>{{ sub.id }}</b></td>
+            </tr>
+            <tr>
+                <td>Тип</td>
+                <td>{{ sub.sub_desc }}</td>
+            </tr>
+            <tr>
+                <td>Начало</td>
+                <td>
+                    {% if sub.start %}
+                        {{ moment(sub.start).format('LL') }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Окончание</td>
+                <td>
+                    {% if sub.end %}
+                        {{ moment(sub.end).format('LL') }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Действующий?</td>
+                <td>
+                    {% if sub.is_valid %}
+                        Да
+                    {% else %}
+                        Нет
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Кол-во визитов</td>
+                <td>{{ sub.visits_used }}</td>
+            </tr>
+            <tr>
+                <td>Использовано часов</td>
+                <td>{{ sub.hours_used }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if visits %}
+        <h2>Завершенные визиты</h2>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <tr>
+                    <th>Начало</th>
+                    <th>Окончание</th>
+                    <th>Продолжительность</th>
+                    <th>Окончательная стоимость</th>                                        
+                    <th>Комментарий</th>
+                </tr>
+                {% for v in visits %}
+                <tr>
+                    <td>{{ moment(v.begin).format('LLL') }}</td>
+                    <td>{{ moment(v.end).format('LLL') }}</td>
+                    <td>{{ time_live(v.begin,v.end) }}</td>
+                    <td>{{ "{:,.0f}".format(v.amount) }}</td>
+                    <td>{{ v.comment }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% else %}
+        <p><b>Визитов не было</b></p>
+    {% endif %}
+
+{% endblock %}

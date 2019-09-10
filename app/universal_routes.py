@@ -1,5 +1,5 @@
 from flask import g, send_file, current_app, flash, redirect, url_for
-from app.models import Const_public, Const_admin, Photo, Client
+from app.models import Const_public, Const_admin, Photo, Client, Subscription_type, Subscription, Visit
 from datetime import datetime
 from flask_babel import get_locale
 import os
@@ -102,3 +102,103 @@ def send_email(subject, sender, recipients, text_body, html_body,#отправк
         mail.send(msg)
     else:
         Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+
+
+def get_full_subscription_info(active_only = False):#развернутое текстовое описание типов абонементов
+    config_types = current_app.config['SUBSCRIPTION_TYPES']
+    types_dict = dict()
+    for t in config_types:
+        types_dict[t[0]] = t[1]
+    subscription_types = list()
+    subscription_types_dict = dict()
+    if active_only:
+        _typesDB =  Subscription_type.query.filter(Subscription_type.active == True).all()
+    else:
+        _typesDB =  Subscription_type.query.all()
+    for a in _typesDB:
+        str_type = types_dict[a._type]
+        if a._type == 'limited':
+            desc = a.name + ': ' + str_type + '  |  ' +  str(a.days_valid)  + ' дней  |  ' +  str(a.hours_valid) + ' часов  |  ' + str(round(a.price)) + ' тг.'
+        else:
+            desc = a.name + ': ' + str_type + '  |  ' +  str(a.days_valid)  + ' дней  |  ' +  str(round(a.price)) + ' тг.'
+        item = (str(a.id),desc)
+        subscription_types.append(item)
+        subscription_types_dict[a.id] = desc
+    return subscription_types, subscription_types_dict
+
+
+def compute_hours_for_subscription(client_id,subscription_id):#сколько времени клиент провел в рамках абонемента
+    items = Visit.query \
+                .filter(Visit.client_id == client_id) \
+                .filter(Visit.subscription_id == subscription_id) \
+                .filter(Visit.end != None).all()#все закрытые визиты по данному клиенту и абонементу
+    visits = len(items)
+    seconds = 0.0
+    for item in items:
+        duration = item.end - item.begin
+        seconds += duration.total_seconds()
+    hours = round(seconds / 3600,1)
+    return hours,visits
+
+
+def check_if_subscription_valid(_id):#является ли абонемент действующим
+    res = False
+    item = Subscription.query \
+        .join(Subscription_type) \
+        .with_entities(Subscription.id,Subscription.end,Subscription.start,Subscription.client_id,Subscription_type._type,Subscription_type.hours_valid) \
+        .filter(Subscription.id == _id).first()
+    now_moment = datetime.utcnow().date()#today's date
+    if (item.end.date() < now_moment) or (item.start.date() > now_moment):
+        return res
+    else:
+        if item._type == 'limited':
+            hours, visits = compute_hours_for_subscription(item.client_id,item.id)
+            if hours < item.hours_valid:
+                res = True
+        else:
+            res = True
+    return res
+
+
+def check_if_client_has_valid_subscriptions(client_id):#есть ли у клиента действующие абонементы
+    res = False
+    items = Subscription.query \
+            .with_entities(Subscription.id) \
+            .filter(Subscription.client_id == client_id).all()
+    for item in items:
+        is_valid = check_if_subscription_valid(item.id)
+        if is_valid:
+            res = True
+            break    
+    return res
+
+
+def find_valid_subscription(client_id):#возвращает id первого действующего абонемента    
+    items = Subscription.query \
+            .with_entities(Subscription.id) \
+            .filter(Subscription.client_id == client_id).all()
+    for item in items:
+        is_valid = check_if_subscription_valid(item.id)
+        if is_valid:
+            res = item.id
+            break
+    return res    
+
+
+def valid_subscription_for_client(client_id):#возвращаем массив с действующим абонементом по клиенту
+    subscription_types, subscription_types_dict = get_full_subscription_info()
+    subscription_id = find_valid_subscription(client_id)
+    _item = Subscription.query.filter(Subscription.id == subscription_id).first()
+    sub_desc = subscription_types_dict[_item.type_id]
+    not_set = [('not_set','--визит не в рамках абонемента--')]
+    valid_subscriptions = [(str(subscription_id),sub_desc)] + not_set
+    return valid_subscriptions
+
+
+def get_sub_desc(sub_id=None):#текстовое описание абонемента
+    res = None
+    if sub_id != None:
+        subscription_types, subscription_types_dict = get_full_subscription_info()
+        _item = Subscription.query.filter(Subscription.id == sub_id).first()    
+        res = "Номер " + str(sub_id) + " - " +subscription_types_dict[_item.type_id]
+    return res    

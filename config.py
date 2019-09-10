@@ -26,5 +26,8 @@ class Config(object):
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS')
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    ORDER_STATUS = [('new','Новый заказ'),('done','Выполнен'),('canceled','Отменен')]
-    USER_ROLES = [('user','Помощник'),('admin','Администратор'),('director','Директор')]
+    ORDER_STATUS = [('new','Новый заказ'),('done','Выполнен'),('canceled','Отменен')]#типы заказов
+    USER_ROLES = [('user','Помощник'),('admin','Администратор'),('director','Директор')]#роли пользователей
+    SUBSCRIPTION_TYPES = [('limited','Лимитированный'),('unlimited','Безлимитный')]#типы абонементов
+    SUBSCRIPTION_DEFAULT_DAYS_DURATION = 30#сколько дней действует типовой абонемент
+    SUBSCRIPTION_DEFAULT_DAYS_GAP=7#на сколько дата начала действия типового абонемента может отличаться от сегодняшней

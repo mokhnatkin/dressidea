@@ -5,8 +5,9 @@ from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
                 DateTimeField, MultipleFileField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from app.models import User, ClientSource, VideoCategory, Promo, Client
+from app.models import User, ClientSource, VideoCategory, Promo, Client, Subscription_type
 from wtforms.fields.html5 import DateField, TimeField
+from app.universal_routes import get_full_subscription_info
 
 
 
@@ -114,8 +115,11 @@ class ClientSearchForm(FlaskForm):#ищем клиента для добавле
     submit = SubmitField('Найти')
 
 
-class VisitForm(FlaskForm):#добавляем визит
-    promo_id = SelectField('Промоакция',choices = [])
+class VisitForm(FlaskForm):#добавляем визит    
+    client_id = SelectField('Клиент', choices = [])
+    subs = [('not_set','--нет действующ. абонемента--')]
+    valid_sub_for_client = SelectField('Абонемент', choices = subs)
+    promo_id = SelectField('Промоакция', choices = [])
     comment = StringField('Комментарий (необязательно)',validators=[Length(min=0,max=200)])
     submit = SubmitField('Добавить визит')
 
@@ -196,4 +200,22 @@ class EditOrderForm(FlaskForm):#меняем заказ
     submit = SubmitField('Изменить / закрыть заказ')
 
 
-  
+class SubscriptionTypesForm(FlaskForm):#типы абонементов
+    subscription_types = current_app.config['SUBSCRIPTION_TYPES']
+    subscription_type = SelectField(label='Тип абонемента',choices = subscription_types,validators=[DataRequired()])
+    name = StringField('Название',validators=[DataRequired(),Length(min=1,max=200)])
+    active = BooleanField(label='Активен')
+    price = DecimalField('Стоимость',validators=[DataRequired()])
+    days_gap = IntegerField(label='Допустимый диапазон для даты начала действия, начиная от сегодняшней даты, дни. По умолчанию: '+str(current_app.config['SUBSCRIPTION_DEFAULT_DAYS_GAP']),validators=[DataRequired()])
+    days_valid = IntegerField(label='Действует (дней). По умолчанию: '+str(current_app.config['SUBSCRIPTION_DEFAULT_DAYS_DURATION']),validators=[DataRequired()])
+    hours_valid = IntegerField(label='Входит (часов), для лимитированных абонементов')
+    submit = SubmitField('Добавить')
+
+
+class SubscriptionForm(FlaskForm):#добавить абонемент
+    active_only=True
+    subscription_types, subscription_types_dict = get_full_subscription_info(active_only)
+    type_id = SelectField(label='Тип абонемента',choices = subscription_types,validators=[DataRequired()])
+    start = DateField('Начало действия', format='%Y-%m-%d',validators=[DataRequired()])
+    submit = SubmitField('Добавить')
+

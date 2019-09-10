@@ -3,12 +3,13 @@ from flask import render_template, flash, redirect, url_for, request, g, \
                     send_file, send_from_directory, current_app
 from app.models import User, Const_public, Photo, Const_admin, ItemInside, ClientSource, \
                         Client, Visit, Booking, Video, VideoCategory, Promo, \
-                        QuestionFromSite, Order
+                        QuestionFromSite, Order, Subscription_type, Subscription
 from app.admin.forms import PhotoUploadForm, Const_adminForm, \
                     Const_publicForm, PhotoEditForm, ItemInsideForm, ClientSourceForm, \
                     ClientForm, VisitForm, BookingForm, ClientSearchForm, \
                     PeriodInputForm, VideoCategoryForm, VideoForm, PromoForm, \
-                    ConfirmVisitAmountForm, EditVisitAmountForm, OrderForm, EditOrderForm
+                    ConfirmVisitAmountForm, EditVisitAmountForm, OrderForm, EditOrderForm, \
+                    SubscriptionTypesForm, SubscriptionForm
 from flask_login import current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
@@ -22,7 +23,10 @@ from app.admin import bp
 from difflib import SequenceMatcher#для неточного поиска
 from app.universal_routes import before_request_u, downloadFile_u, get_path_to_static_u, \
                     get_path_to_static_photo_albums_u, get_photos_for_photo_albums_u, \
-                    get_video_type_name_u, required_roles_u, get_client_by_id
+                    get_video_type_name_u, required_roles_u, get_client_by_id, \
+                    get_full_subscription_info, check_if_subscription_valid, \
+                    compute_hours_for_subscription, check_if_client_has_valid_subscriptions, \
+                    find_valid_subscription,valid_subscription_for_client, get_sub_desc
 
 
 @bp.before_request
@@ -406,7 +410,7 @@ def clients():
     title = 'Список клиентов'
     descr = 'Для поиска клиента воспользуйтесь формой поиска. Чтобы посмотреть детальную информацию по клиенту, нажмите на его имя.'
     form = ClientSearchForm()
-    clients = Client.query.order_by(Client.timestamp.desc()).all()
+    clients = Client.query.order_by(Client.timestamp.desc()).all()    
     client_found = False
     client_by_phone = None
     if form.validate_on_submit():
@@ -430,22 +434,45 @@ def client_info(client_id=None):
     descr = 'Подробная информация по клиенту - брони, визиты'
     show_visits = False
     show_bookings = False
-    total_stat = None
+    show_subscriptions = False
+    total_stat = None    
     client = Client.query.filter(Client.id == client_id).first()
+    #get visits
     visits = Visit.query.filter(Visit.client_id == client_id) \
                         .filter(Visit.end != None) \
                         .order_by(Visit.begin).all()
     if visits is not None and len(visits)>0:
         show_visits = True
         total_stat, stat_per_day, stat_per_client, stat_per_promo = compute_stat(visits)
+    #get bookings
     bookings = Booking.query.filter(Booking.client_id == client_id) \
                         .order_by(Booking.begin).all()
     if bookings is not None and len(bookings)>0:
-        show_bookings = True                        
+        show_bookings = True
+    #get subscriptions
+    subscription_types, subscription_types_dict = get_full_subscription_info()
+    _items = Subscription.query \
+                .join(Client) \
+                .join(Subscription_type) \
+                .with_entities(Subscription.id,Subscription.start,Subscription.end,Subscription.client_id,Client.name,Subscription_type.id.label('sub_id')) \
+                .filter(Subscription.client_id == client_id).all()
+    subscriptions = list()
+    for _item in _items:
+        s_hours, s_visits = compute_hours_for_subscription(_item.client_id,_item.id)
+        item = {"id":_item.id,"start":_item.start,"end":_item.end, \
+                "client_id":_item.client_id, "name":_item.name,
+                "sub_desc": subscription_types_dict[_item.sub_id],
+                "is_valid": check_if_subscription_valid(_item.id),
+                "hours_used": s_hours, "visits_used": s_visits}
+        subscriptions.append(item)    
+    if subscriptions is not None and len(subscriptions)>0:
+        show_subscriptions = True
+        subscriptions.sort(key=lambda x: x['is_valid'],reverse=True)
     return render_template('admin/client_info.html',title=title,descr=descr,client=client,\
                             show_visits=show_visits,visits=visits,show_source_name=show_source_name, \
                             show_bookings=show_bookings,bookings=bookings,total_stat=total_stat, \
-                            get_promo_name=get_promo_name)
+                            get_promo_name=get_promo_name, show_subscriptions=show_subscriptions, \
+                            subscriptions=subscriptions)
 
 
 def search_client_by_name(name):#неточный поиск клиента по имени
@@ -475,9 +502,10 @@ def add_visit_booking():
     page = request.args.get('page',1,type=int)
     clients = Client.query \
             .order_by(Client.timestamp.desc()) \
-            .paginate(page,current_app.config['PAGINATION_ITEMS_PER_PAGE'],False)
+            .paginate(page,current_app.config['PAGINATION_ITEMS_PER_PAGE'],False)    
     next_url = url_for('admin.add_visit_booking',page=clients.next_num) if clients.has_next else None
     prev_url = url_for('admin.add_visit_booking',page=clients.prev_num) if clients.has_prev else None            
+    
     if form.validate_on_submit():
         try:
             phone = form.phone.data
@@ -508,7 +536,8 @@ def add_visit_booking():
             flash('Не удалось выполнить поиск.')
     return render_template('admin/add_visit_booking.html',title=title,descr=descr,clients=clients.items,\
                     form=form,client_found=client_found,clients_by_phone_name=clients_by_phone_name, \
-                    next_url=next_url,prev_url=prev_url)
+                    next_url=next_url,prev_url=prev_url, \
+                    check_if_client_has_valid_subscriptions=check_if_client_has_valid_subscriptions)
 
 
 @bp.route('/add_visit/<client_id>',methods=['GET', 'POST'])#добавляем визит
@@ -518,7 +547,12 @@ def add_visit_for_client(client_id = None):
     h1_txt = 'Добавить визит'
     client = Client.query.filter(Client.id == client_id).first()
     descr = 'Добавление визита. Клиент: ' + client.name + ', телефон ' + str(client.phone)
+
     form = VisitForm()
+    form.client_id.choices = [(str(client_id),client.name)]
+    if check_if_client_has_valid_subscriptions(client_id):
+        form.valid_sub_for_client.choices = valid_subscription_for_client(client_id)
+        
     if form.validate_on_submit():
         #проверим, чтобы не было открытых визитов у этого клиента
         open_visits = Visit.query \
@@ -529,10 +563,16 @@ def add_visit_for_client(client_id = None):
         else:
             has_open_visits = False
         if not has_open_visits:
-            if form.promo_id.data == 'not_set':#промоакция не указана
-                visit = Visit(client_id=client_id,comment=form.comment.data)
+            if form.promo_id.data == 'not_set':#промоакция не выбрана
+                promo_id = None
             else:
-                visit = Visit(client_id=client_id,promo_id=form.promo_id.data,comment=form.comment.data)
+                promo_id = form.promo_id.data
+            if form.valid_sub_for_client.data == 'not_set':#абонемент не выбран
+                subscription_id = None
+            else:#абонемент выбран, обнулим инфо о промоакции
+                promo_id = None
+                subscription_id = form.valid_sub_for_client.data
+            visit = Visit(client_id=client_id,promo_id=promo_id,subscription_id=subscription_id,comment=form.comment.data)
             db.session.add(visit)
             db.session.commit()
             flash('Визит открыт')
@@ -594,12 +634,17 @@ def compute_amount_no_promo(begin,param):#рассчитать стоимост�
     return amount
 
 
-def compute_amount(begin,promo_id):#рассчитать стоимость визита
+def compute_amount(begin,promo_id,sub_id):#рассчитать стоимость визита
     amount = 0
     promo_name = None
+
+    if sub_id:#если визит в рамках абонемента, стоимость 0
+        return amount
+    
     if promo_id:
         promo = Promo.query.filter(Promo.id == promo_id).first()
         promo_name = get_promo_type_name(promo.promo_type)
+
     if promo_id and promo_name != 'individual':#выбрана акция, но не индивид        
         if promo_name in ('fix_value','group_visit'):#фиксированная цена или групповой визит
             amount = promo.value
@@ -630,36 +675,42 @@ def get_promo_name(promo_id):
     return res
 
 
-def get_now():#для получения текущего времени
-    return datetime.utcnow()
-
-
 @bp.route('/visits_today/<param>')#визиты
 @login_required
-def visits_today(param=None):
+def visits_today(param='today'):
     descr = None
-    if param is None:
-        param = 'today'
-    title = 'Сейчас в коворкинге'    
-    tomor_date = datetime.utcnow().date() + timedelta(days=1)
-    yest_date = datetime.utcnow().date()
-    visits = None
+    title = 'Сейчас в коворкинге'
+    now_moment = datetime.utcnow()
+    tomor_date = now_moment.date() + timedelta(days=1)
+    yest_date = now_moment.date()
+    
     if param == 'all':#все визиты
         descr = 'Все визиты'
-        visits = Visit.query.join(Client) \
-                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount,Visit.promo_id) \
+        _items = Visit.query.join(Client) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount,Visit.promo_id,Visit.subscription_id) \
                 .order_by(Visit.begin.desc()).all()
     elif param == 'today':#сегодняшние
         descr = 'Сегодняшние визиты'
-        visits = Visit.query.join(Client) \
-                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount,Visit.promo_id) \
+        _items = Visit.query.join(Client) \
+                .with_entities(Client.name,Client.phone,Visit.id,Visit.client_id,Visit.begin,Visit.end,Visit.comment,Visit.amount,Visit.promo_id,Visit.subscription_id) \
                 .filter(Visit.begin > yest_date) \
                 .filter(Visit.begin < tomor_date) \
                 .order_by(Visit.begin.desc()).all()
+    
+    visits = list()
+    for _item in _items:
+        item = {"name":_item.name,"phone":_item.phone,"id":_item.id,
+                "client_id":_item.client_id, "begin":_item.begin,
+                "end":_item.end, "comment":_item.comment, "amount":_item.amount,
+                "promo_id":_item.promo_id,
+                "sub_desc": get_sub_desc(_item.subscription_id),
+                "subscription_id":_item.subscription_id}
+        visits.append(item)
+
     return render_template('admin/visits_today.html',title=title,visits=visits, \
                             time_live=time_live,compute_amount=compute_amount, \
                             get_promo_name=get_promo_name, descr=descr,param=param, \
-                            get_now=get_now)
+                            now_moment=now_moment)
 
 
 @bp.route('/close_visit/<visit_id>')#завершить визит
@@ -672,9 +723,9 @@ def close_visit(visit_id=None):
             if get_promo_type_name(promo.promo_type) == 'group_visit':
                 return redirect(url_for('admin.confirm_and_close_visit',visit_id=visit_id,amount=promo.value))
             else:
-                amount = compute_amount(visit.begin,visit.promo_id)
+                amount = compute_amount(visit.begin,visit.promo_id,None)
                 return redirect(url_for('admin.confirm_and_close_visit',visit_id=visit_id,amount=amount))            
-    amount = compute_amount(visit.begin,visit.promo_id)
+    amount = compute_amount(visit.begin,visit.promo_id,visit.subscription_id)
     visit.amount = amount
     visit.end = datetime.utcnow()
     db.session.commit()
@@ -1308,7 +1359,7 @@ def get_order_status_name(param):#статус заказа для отобра�
 @required_roles('admin','director')
 def add_order():
     title='Добавить заказ'
-    descr = 'Здесь можно добавить мой заказ'
+    descr = 'Здесь можно добавить заказ'
     h1_txt = 'Добавить заказ'
     form = OrderForm()
     if form.validate_on_submit():
@@ -1385,3 +1436,163 @@ def delete_order(order_id = None):
         flash('Заказ для удаления не найден. Возможно, он уже был удалён ранее.')
         return redirect(url_for('admin.my_orders'))
     return redirect(url_for('admin.my_orders'))
+
+
+@bp.route('/add_subscription_type',methods=['GET','POST'])#добавить тип абонемента
+@login_required
+@required_roles('admin','director')
+def add_subscription_type():
+    title='Добавить тип абонемента'
+    descr = 'Здесь можно добавить новый тип абонемента'
+    h1_txt = 'Добавить тип абонемента'
+    form = SubscriptionTypesForm()
+    
+    if form.validate_on_submit():
+        subscription_type = form.subscription_type.data
+        name = form.name.data
+        active = form.active.data
+        price = form.price.data
+        days_valid = form.days_valid.data
+        days_gap = form.days_gap.data
+        hours_valid = form.hours_valid.data
+        subscrition_type = Subscription_type(_type=subscription_type,name=name,active=active,price=price,days_valid=days_valid,hours_valid=hours_valid,days_gap=days_gap)
+        db.session.add(subscrition_type)
+        db.session.commit()
+        flash('Тип абонемента добавлен.')
+        return redirect(url_for('admin.subscription_types'))
+    return render_template('admin/add_edit_DB_item.html',title=title, \
+                            h1_txt=h1_txt,descr=descr,form=form)
+
+
+@bp.route('/subscription_types')#типы абонементов
+@login_required
+@required_roles('admin','director')
+def subscription_types():
+    title = 'Список типов абонементов'
+    descr = 'Список типов абонементов'
+    _types = Subscription_type.query.all()
+    return render_template('admin/subscription_types.html',title=title,_types=_types,descr=descr)
+
+
+@bp.route('/change_subscription_type_active/<_id>',methods=['GET', 'POST'])#изменить активность типа абонемента
+@login_required
+@required_roles('admin','director')
+def change_subscription_type_active(_id = None):
+    item = Subscription_type.query.filter(Subscription_type.id == _id).first()
+    try:
+        if item.active:
+            item.active = False
+        else:
+            item.active = True    
+        db.session.commit()
+        flash('Активность типа абонемента изменена')
+    except:
+        flash('Не удалось изменить активность типа абонемента')
+    return redirect(url_for('admin.subscription_types'))
+
+
+@bp.route('/subscriptions/<param>/<_type_id>')#абонементы
+@login_required
+def subscriptions(param='all',_type_id=None):
+    title = 'Список абонементов'    
+    subscription_types, subscription_types_dict = get_full_subscription_info()
+    if param == 'all':
+        descr = 'Список всех абонементов'
+        _items = Subscription.query \
+                .join(Client) \
+                .join(Subscription_type) \
+                .with_entities(Subscription.id,Subscription.start,Subscription.end,Subscription.client_id,Client.name,Subscription_type.id.label('sub_id')) \
+                .order_by(Subscription.start.desc()).all()
+    elif param == 'given':
+        descr = 'Список всех абонементов для выбранного типа'
+        _items = Subscription.query \
+                .join(Client) \
+                .join(Subscription_type) \
+                .with_entities(Subscription.id,Subscription.start,Subscription.end,Subscription.client_id,Client.name,Subscription_type.id.label('sub_id')) \
+                .filter(Subscription.type_id == _type_id) \
+                .order_by(Subscription.start.desc()).all()
+    
+    items = list()
+    
+    for _item in _items:
+        hours, visits = compute_hours_for_subscription(_item.client_id,_item.id)
+        if _item.sub_id in subscription_types_dict:
+            sub_desc = subscription_types_dict[_item.sub_id]
+        else:
+            sub_desc = None
+        item = {"id":_item.id,"start":_item.start,"end":_item.end,
+                "client_id":_item.client_id, "name":_item.name,
+                "sub_desc": sub_desc,
+                "is_valid": check_if_subscription_valid(_item.id),
+                "hours_used": hours, "visits_used": visits}
+        items.append(item)
+    return render_template('admin/subscriptions.html',title=title,items=items,descr=descr)
+
+
+@bp.route('/subscription_info/<_id>')#инфо по абонементу
+@login_required
+def subscription_info(_id):
+    title = 'Инфо по абонементу'
+    descr = 'Инфо по абонементу'
+    subscription_types, subscription_types_dict = get_full_subscription_info()
+    _item = Subscription.query \
+                .join(Subscription_type) \
+                .with_entities(Subscription.id,Subscription.start,Subscription.end,Subscription.client_id,Subscription_type.id.label('sub_id')) \
+                .filter(Subscription.id == _id).first()    
+    client = Client.query.filter(Client.id == _item.client_id).first()    
+    hours_used, visits_used = compute_hours_for_subscription(_item.client_id,_item.id)
+    if _item.sub_id in subscription_types_dict:
+        sub_desc = subscription_types_dict[_item.sub_id]
+    else:
+        sub_desc = None
+    sub = {"id":_item.id,"start":_item.start,"end":_item.end,
+                "client_id":_item.client_id, "sub_desc": sub_desc,
+                "is_valid": check_if_subscription_valid(_item.id),
+                "hours_used": hours_used, "visits_used": visits_used}
+    visits = Visit.query.filter(Visit.subscription_id == _id) \
+                        .filter(Visit.end != None) \
+                        .order_by(Visit.begin).all()
+    return render_template('admin/subscription_info.html',title=title,sub=sub,descr=descr, \
+                    client=client,visits=visits,time_live=time_live)
+
+    
+@bp.route('/add_subscription/<client_id>',methods=['GET', 'POST'])#добавляем абонемент
+@login_required
+def add_subscription_for_client(client_id = None):
+    title='Добавить абонемент'
+    h1_txt = 'Добавить абонемент'
+    client = Client.query.filter(Client.id == client_id).first()
+    descr = 'Добавление абонемента. Клиент: ' + client.name + ', телефон ' + str(client.phone)
+    form = SubscriptionForm()
+    now_moment = datetime.utcnow().date()    
+
+    if form.validate_on_submit():
+        type_id=form.type_id.data
+        s_type = Subscription_type.query.filter(Subscription_type.id == type_id).first()
+        #start date should be between specified for subscription type boundaries
+        start = form.start.data
+        max_date = now_moment + timedelta(days=s_type.days_gap)
+        if (start < now_moment) or (start > max_date):
+            flash('Дата начала действия абонемента должна быть в диапазоне от '+datetime.strftime(now_moment, '%d.%m.%Y')+' до '+datetime.strftime(max_date, '%d.%m.%Y'))
+            return redirect(url_for('admin.add_subscription_for_client',client_id=client_id))
+        end = start + timedelta(days=s_type.days_valid)
+        subscription = Subscription(type_id=type_id,client_id=client_id,start=start,end=end)
+        db.session.add(subscription)
+        db.session.commit()
+        # добавляем визит длительностью 1 сек. и стоимостью = Стоимость абонемента
+        just_added_sub = Subscription.query \
+                        .filter(Subscription.client_id==client_id) \
+                        .filter(Subscription.type_id==type_id) \
+                        .filter(Subscription.start==start).first()
+        subscription_id = just_added_sub.id
+        sub_type = Subscription_type.query \
+                    .filter(Subscription_type.id==just_added_sub.type_id).first()
+        amount = sub_type.price
+        end = datetime.utcnow() + timedelta(seconds=1)
+        visit = Visit(client_id=client_id,subscription_id=subscription_id,amount=amount,end=end,comment='Создан автоматически при добавлении абонемента')
+        db.session.add(visit)
+        db.session.commit()
+        flash('Абонемент добавлен. Теперь к нему можно создавать визиты как обычно (в списке акций выбирайте созданный абонемент).')
+        return redirect(url_for('admin.add_visit_for_client',client_id=client_id))
+    return render_template('admin/add_edit_DB_item.html',title=title, \
+                descr=descr,client=client,form=form,h1_txt=h1_txt)

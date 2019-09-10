@@ -38,6 +38,50 @@
             </tr>
         </table>
     </div>
+
+    {% if show_subscriptions %}
+        <h2>Абонементы</h2>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <tr>
+                    <th>Номер</th>                    
+                    <th>Начало</th>
+                    <th>Окончание</th>
+                    <th>Действующий?</th>
+                    <th>Тип абонемента</th>
+                    <th>Кол-во визитов</th>
+                    <th>Израсходовано часов</th>                
+                </tr>
+                {% if subscriptions %}
+                    {% for t in subscriptions %}
+                        <tr>
+                            <td>{{ t.id }}</td>
+                            <td>{% if t.start %}
+                                    {{ moment(t.start).format('LL') }}
+                                {% endif %}
+                            </td>
+                            <td>{% if t.end %}
+                                    {{ moment(t.end).format('LL') }}
+                                {% endif %}
+                            </td>
+                            <td>{% if t.is_valid %}
+                                    Да
+                                {% else %}
+                                    Нет
+                                {% endif %}
+                            </td>
+                            <td>{{ t.sub_desc }}</td>
+                            <td>{{ t.visits_used }}</td>
+                            <td>{{ t.hours_used }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </table>
+        </div>
+    {% else %}
+        <p><b>Абонементов нет</b></p>
+    {% endif %}
+
     {% if show_visits %}
         <h2>Завершенные визиты</h2>
         {% if total_stat %}

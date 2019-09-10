@@ -81,6 +81,17 @@
                         <li><a class="navbar-brand" href="{{ url_for('admin.all_bookings',param='today') }}">Брони</a></li>
                         <li><a class="navbar-brand" href="{{ url_for('admin.clients') }}">Клиенты</a></li>
                         {% if current_user.role in ('admin','director') %}
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Абонементы
+                                </button>
+                                <div class="dropdown-menu">
+                                    <ul class="nav navbar-nav">
+                                        <li><a href="{{ url_for('admin.subscription_types') }}">Типы абонементов</a></li>
+                                        <li><a href="{{ url_for('admin.subscriptions',param='all',_type_id='not_set') }}">Абонементы</a></li>
+                                    </ul>
+                                </div>
+                            </div>                           
                             <li><a class="navbar-brand" href="{{ url_for('admin.stat') }}">Статистика</a></li>
                             <li><a class="navbar-brand" href="{{ url_for('admin.add_video') }}">+ мастер-класс</a></li>
                             <li><a class="navbar-brand" href="{{ url_for('admin.video_list') }}">Мастер-классы</a></li>

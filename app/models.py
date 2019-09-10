@@ -71,7 +71,8 @@ class Client(db.Model):#карточка клиента
     can_place_orders = db.Column(db.Boolean)
     bookings = db.relationship('Booking',backref='client',lazy='dynamic')
     visits = db.relationship('Visit',backref='client',lazy='dynamic')
-    visits = db.relationship('Order',backref='client',lazy='dynamic')
+    orders = db.relationship('Order',backref='client',lazy='dynamic')
+    subscriptions = db.relationship('Subscription',backref='client',lazy='dynamic')
 
     def __repr__(self):
         return '<Client {}>'.format(self.name)
@@ -87,15 +88,38 @@ class Booking(db.Model):#запись (регистрация) на посеще
     attended = db.Column(db.Boolean)
 
 
+class Subscription_type(db.Model):#тип абонемента
+    id = db.Column(db.Integer,primary_key=True)
+    _type = db.Column(db.String(20), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    active = db.Column(db.Boolean)
+    price = db.Column(db.Float, nullable=False)
+    days_valid = db.Column(db.Integer, nullable=False)
+    hours_valid = db.Column(db.Integer)
+    days_gap = db.Column(db.Integer)
+    subscriptions = db.relationship('Subscription',backref='subscription_type',lazy='dynamic')
+
+
+class Subscription(db.Model):#абонемент
+    id = db.Column(db.Integer,primary_key=True)
+    type_id = db.Column(db.Integer,db.ForeignKey('subscription_type.id'))
+    client_id = db.Column(db.Integer,db.ForeignKey('client.id'))
+    start = db.Column(db.DateTime, nullable=False)
+    end = db.Column(db.DateTime, nullable=False)
+    visits = db.relationship('Visit',backref='subscription',lazy='dynamic')
+
+
 class Visit(db.Model):#посещение
     id = db.Column(db.Integer,primary_key=True)
     client_id = db.Column(db.Integer,db.ForeignKey('client.id'))
+    subscription_id = db.Column(db.Integer,db.ForeignKey('subscription.id'))
     begin = db.Column(db.DateTime,default=datetime.utcnow, nullable=False)
     end = db.Column(db.DateTime)
     amount = db.Column(db.Float)
     comment = db.Column(db.String(200))
     timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
     promo_id = db.Column(db.Integer,db.ForeignKey('promo.id'))
+    subscription_id = db.Column(db.Integer,db.ForeignKey('subscription.id'))
 
 
 class ItemInside(db.Model):#что внутри коворкинга

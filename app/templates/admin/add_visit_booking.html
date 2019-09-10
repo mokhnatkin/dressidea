@@ -26,6 +26,7 @@
                     <th>Мобильный телефон</th>
                     <th>Добавить визит</th>
                     <th>Добавить бронь</th>
+                    <th>Добавить абонемент</th>
                 </tr>
                 {% for c in clients_by_phone_name %}
                     <tr>
@@ -33,6 +34,13 @@
                         <td>{{ c.phone }}</td>
                         <td><a href="{{ url_for('admin.add_visit_for_client',client_id=c.id) }}" class="btn btn-success" role="button">Добавить визит</a></td>
                         <td><a href="{{ url_for('admin.add_booking_for_client',client_id=c.id) }}" class="btn btn-info" role="button">Добавить бронь</a></td>
+                        <td>
+                            {% if check_if_client_has_valid_subscriptions(c.id) %}
+                                Есть действ. абонемент
+                            {% else %}
+                                <a href="{{ url_for('admin.add_subscription_for_client',client_id=c.id) }}" class="btn btn-primary" role="button">Добавить абонемент</a>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
             </table>
@@ -45,6 +53,7 @@
                     <th>Мобильный телефон</th>
                     <th>Добавить визит</th>
                     <th>Добавить бронь</th>
+                    <th>Добавить абонемент</th>
                 </tr>                
                 {% for c in clients %}
                     <tr>
@@ -52,6 +61,13 @@
                         <td>{{ c.phone }}</td>
                         <td><a href="{{ url_for('admin.add_visit_for_client',client_id=c.id) }}" class="btn btn-success" role="button">Добавить визит</a></td>
                         <td><a href="{{ url_for('admin.add_booking_for_client',client_id=c.id) }}" class="btn btn-info" role="button">Добавить бронь</a></td>
+                        <td>
+                            {% if check_if_client_has_valid_subscriptions(c.id) %}
+                                Есть действ. абонемент
+                            {% else %}
+                                <a href="{{ url_for('admin.add_subscription_for_client',client_id=c.id) }}" class="btn btn-primary" role="button">Добавить абонемент</a>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}                
             </table>
