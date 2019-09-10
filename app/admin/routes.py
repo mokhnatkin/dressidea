@@ -450,7 +450,8 @@ def client_info(client_id=None):
     if bookings is not None and len(bookings)>0:
         show_bookings = True
     #get subscriptions
-    subscription_types, subscription_types_dict = get_full_subscription_info()
+    _typesDB = Subscription_type.query.all()
+    subscription_types, subscription_types_dict = get_full_subscription_info(_typesDB)
     _items = Subscription.query \
                 .join(Client) \
                 .join(Subscription_type) \
@@ -1494,8 +1495,9 @@ def change_subscription_type_active(_id = None):
 @bp.route('/subscriptions/<param>/<_type_id>')#абонементы
 @login_required
 def subscriptions(param='all',_type_id=None):
-    title = 'Список абонементов'    
-    subscription_types, subscription_types_dict = get_full_subscription_info()
+    title = 'Список абонементов'
+    _typesDB = Subscription_type.query.all()
+    subscription_types, subscription_types_dict = get_full_subscription_info(_typesDB)
     if param == 'all':
         descr = 'Список всех абонементов'
         _items = Subscription.query \
@@ -1534,7 +1536,8 @@ def subscriptions(param='all',_type_id=None):
 def subscription_info(_id):
     title = 'Инфо по абонементу'
     descr = 'Инфо по абонементу'
-    subscription_types, subscription_types_dict = get_full_subscription_info()
+    _typesDB = Subscription_type.query.all()
+    subscription_types, subscription_types_dict = get_full_subscription_info(_typesDB)
     _item = Subscription.query \
                 .join(Subscription_type) \
                 .with_entities(Subscription.id,Subscription.start,Subscription.end,Subscription.client_id,Subscription_type.id.label('sub_id')) \

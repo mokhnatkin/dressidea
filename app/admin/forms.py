@@ -212,10 +212,14 @@ class SubscriptionTypesForm(FlaskForm):#типы абонементов
     submit = SubmitField('Добавить')
 
 
-class SubscriptionForm(FlaskForm):#добавить абонемент
-    active_only=True
-    subscription_types, subscription_types_dict = get_full_subscription_info(active_only)
-    type_id = SelectField(label='Тип абонемента',choices = subscription_types,validators=[DataRequired()])
+class SubscriptionForm(FlaskForm):#добавить абонемент    
+    type_id = SelectField(label='Тип абонемента',choices = [],validators=[DataRequired()])
     start = DateField('Начало действия', format='%Y-%m-%d',validators=[DataRequired()])
     submit = SubmitField('Добавить')
+
+    def __init__(self, *args, **kwargs):
+        super(SubscriptionForm, self).__init__(*args, **kwargs)
+        _typesDB = Subscription_type.query.filter(Subscription_type.active == True).all()
+        subscription_types, subscription_types_dict = get_full_subscription_info(_typesDB)        
+        self.type_id.choices = subscription_types    
 

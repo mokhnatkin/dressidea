@@ -104,17 +104,15 @@ def send_email(subject, sender, recipients, text_body, html_body,#отправк
         Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
 
-def get_full_subscription_info(active_only = False):#развернутое текстовое описание типов абонементов
+def get_full_subscription_info(_typesDB):#развернутое текстовое описание типов абонементов
     config_types = current_app.config['SUBSCRIPTION_TYPES']
     types_dict = dict()
+
     for t in config_types:
         types_dict[t[0]] = t[1]
     subscription_types = list()
     subscription_types_dict = dict()
-    if active_only:
-        _typesDB =  Subscription_type.query.filter(Subscription_type.active == True).all()
-    else:
-        _typesDB =  Subscription_type.query.all()
+
     for a in _typesDB:
         str_type = types_dict[a._type]
         if a._type == 'limited':
@@ -186,7 +184,8 @@ def find_valid_subscription(client_id):#возвращает id первого �
 
 
 def valid_subscription_for_client(client_id):#возвращаем массив с действующим абонементом по клиенту
-    subscription_types, subscription_types_dict = get_full_subscription_info()
+    _typesDB = Subscription_type.query.all()
+    subscription_types, subscription_types_dict = get_full_subscription_info(_typesDB)
     subscription_id = find_valid_subscription(client_id)
     _item = Subscription.query.filter(Subscription.id == subscription_id).first()
     sub_desc = subscription_types_dict[_item.type_id]
@@ -198,7 +197,8 @@ def valid_subscription_for_client(client_id):#возвращаем массив 
 def get_sub_desc(sub_id=None):#текстовое описание абонемента
     res = None
     if sub_id != None:
-        subscription_types, subscription_types_dict = get_full_subscription_info()
+        _typesDB = Subscription_type.query.all()
+        subscription_types, subscription_types_dict = get_full_subscription_info(_typesDB)
         _item = Subscription.query.filter(Subscription.id == sub_id).first()    
         res = "Номер " + str(sub_id) + " - " +subscription_types_dict[_item.type_id]
     return res    

@@ -55,7 +55,7 @@
                 {% if subscriptions %}
                     {% for t in subscriptions %}
                         <tr>
-                            <td>{{ t.id }}</td>
+                            <td><a href="{{ url_for('admin.subscription_info',_id=t.id) }}">{{ t.id }}</a></td>
                             <td>{% if t.start %}
                                     {{ moment(t.start).format('LL') }}
                                 {% endif %}
